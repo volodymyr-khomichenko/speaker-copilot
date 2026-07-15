@@ -1,11 +1,14 @@
 import { useState } from "react";
 import type { SosNote } from "../lib/types";
+import { CardForm } from "./CardForm";
+import { FullCardView } from "./FullCardView";
 
 interface Props {
   title: string;
   accent: "clue" | "qna";
   cards: SosNote[];
   emptyHint: string;
+  onAdd?: (card: { title: string; text: string }) => void;
   onClose: () => void;
 }
 
@@ -14,28 +17,20 @@ interface Props {
  * List view: tap a card to blow it up full screen.
  * Full-screen view: tap anywhere to go back to the list.
  */
-export function ClueDeckOverlay({ title, accent, cards, emptyHint, onClose }: Props) {
+export function ClueDeckOverlay({ title, accent, cards, emptyHint, onAdd, onClose }: Props) {
   const head = accent === "qna" ? "text-qna" : "text-onair";
   const frame = accent === "qna" ? "border-qna/40" : "border-onair/40";
   const [openId, setOpenId] = useState<string | null>(null);
-  const open = cards.find((c) => c.id === openId);
 
-  if (open) {
+  if (openId && cards.some((c) => c.id === openId)) {
     return (
-      <button
-        onClick={() => setOpenId(null)}
-        className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-stage px-6 text-center"
-      >
-        {open.title && (
-          <div className={`display mb-4 text-sm font-bold uppercase tracking-[0.25em] ${head}`}>
-            {open.title}
-          </div>
-        )}
-        <div className="display max-h-[70dvh] overflow-y-auto whitespace-pre-wrap text-[clamp(1.75rem,7.5vw,3.5rem)] font-extrabold leading-tight">
-          {open.text}
-        </div>
-        <div className="mt-8 text-sm text-dim">tap anywhere to go back</div>
-      </button>
+      <FullCardView
+        cards={cards}
+        openId={openId}
+        headClass={head}
+        onNavigate={setOpenId}
+        onBack={() => setOpenId(null)}
+      />
     );
   }
 
@@ -72,13 +67,14 @@ export function ClueDeckOverlay({ title, accent, cards, emptyHint, onClose }: Pr
             <div className="mt-2 text-xs text-dim">tap to show full screen</div>
           </button>
         ))}
+        {onAdd && <CardForm accentBorder={frame} onSave={onAdd} />}
       </div>
 
       <button
         onClick={onClose}
         className="display mx-5 mb-[max(1.25rem,env(safe-area-inset-bottom))] rounded-2xl bg-panel-2 py-4 text-lg font-bold"
       >
-        Back to the talk
+        Close
       </button>
     </div>
   );

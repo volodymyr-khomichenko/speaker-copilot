@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Presentation, RunReport } from "../lib/types";
-import { fmtClock, fmtOver } from "../lib/time";
+import { totalDuration, uid } from "../lib/types";
+import { fmtClock, fmtLong, fmtOver } from "../lib/time";
 import { usePresentationTimer } from "../hooks/usePresentationTimer";
 import { useCues, type CueKind } from "../hooks/useCues";
 import { useWakeLock } from "../hooks/useWakeLock";
@@ -8,22 +9,220 @@ import { CardsOverlay } from "../components/SosOverlay";
 import { ClueDeckOverlay } from "../components/ClueDeckOverlay";
 import { TransitionAlert } from "../components/TransitionAlert";
 
+type Deck = "clue" | "sos" | "qna";
+
+type Mode = "test" | "live";
+
 interface Props {
   presentation: Presentation;
   soundOn: boolean;
   onToggleSound: () => void;
-  onEnd: (report: RunReport) => void;
+  onEnd: (report: RunReport, mode: Mode) => void;
+  onExit: () => void;
+  onEditTalk: () => void;
+  onUpdate: (p: Presentation) => void;
 }
 
-export function PresentationMode({
+/**
+ * Two phases. Standby: review sections and decks, nothing is ticking.
+ * Run: tap Start and the clock takes over.
+ */
+export function PresentationMode(props: Props) {
+  const { presentation, onUpdate } = props;
+  // The mode is chosen on the standby screen: test run or live session.
+  const [mode, setMode] = useState<Mode | null>(null);
+  const [openDeck, setOpenDeck] = useState<Deck | null>(null);
+
+  const addCard = (
+    deck: Deck,
+    card: { title: string; text: string; category?: string }
+  ) =>
+    onUpdate({
+      ...presentation,
+      sosNotes: [...presentation.sosNotes, { id: uid(), deck, ...card }],
+      updatedAt: Date.now()
+    });
+
+  const overlays = (
+    <>
+      {openDeck === "sos" && (
+        <CardsOverlay
+          title="SOS · emergency"
+          accent="sos"
+          notes={presentation.sosNotes.filter((n) => (n.deck ?? "sos") === "sos")}
+          emptyHint="No SOS cards yet. Add what to do when something goes wrong."
+          onAdd={(c) => addCard("sos", c)}
+          onClose={() => setOpenDeck(null)}
+        />
+      )}
+      {openDeck === "clue" && (
+        <ClueDeckOverlay
+          title="Clue cards"
+          accent="clue"
+          cards={presentation.sosNotes.filter((n) => n.deck === "clue")}
+          emptyHint="No clue cards yet. Add a number, a quote, a key phrase — tap a card on stage to show it full screen."
+          onAdd={(c) => addCard("clue", c)}
+          onClose={() => setOpenDeck(null)}
+        />
+      )}
+      {openDeck === "qna" && (
+        <ClueDeckOverlay
+          title="Q&A"
+          accent="qna"
+          cards={presentation.sosNotes.filter((n) => n.deck === "qna")}
+          emptyHint="No Q&A cards yet. Add expected questions and your short answers."
+          onAdd={(c) => addCard("qna", c)}
+          onClose={() => setOpenDeck(null)}
+        />
+      )}
+    </>
+  );
+
+  const deckButtons = (
+    <div className="grid grid-cols-3 gap-2">
+      <button
+        onClick={() => setOpenDeck("clue")}
+        className="display h-16 rounded-xl border border-onair/60 bg-onair/10 font-bold text-onair"
+      >
+        Clue cards
+      </button>
+      <button
+        onClick={() => setOpenDeck("sos")}
+        className="display h-16 rounded-xl border border-sos/60 bg-sos/10 font-bold tracking-widest text-sos"
+      >
+        SOS
+      </button>
+      <button
+        onClick={() => setOpenDeck("qna")}
+        className="display h-16 rounded-xl border border-qna/60 bg-qna/10 font-bold text-qna"
+      >
+        Q&A
+      </button>
+    </div>
+  );
+
+  if (mode === null) {
+    return (
+      <Standby
+        {...props}
+        overlays={overlays}
+        deckButtons={deckButtons}
+        onStart={setMode}
+      />
+    );
+  }
+  return (
+    <Run {...props} mode={mode} overlays={overlays} deckButtons={deckButtons} />
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+interface PhaseProps extends Props {
+  overlays: React.ReactNode;
+  deckButtons: React.ReactNode;
+}
+
+/** Pre-start screen: everything is visible, nothing is running. */
+function Standby({
   presentation,
+  overlays,
+  deckButtons,
+  onExit,
+  onEditTalk,
+  onStart
+}: PhaseProps & { onStart: (mode: Mode) => void }) {
+  const total = totalDuration(presentation);
+  const left = Math.max(
+    0,
+    (presentation.testRunGoal ?? 10) - (presentation.testRunsDone ?? 0)
+  );
+  return (
+    <div className="mx-auto flex h-dvh max-w-md flex-col px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
+      {overlays}
+
+      <header className="mb-3 flex items-center justify-between">
+        <button onClick={onExit} className="text-dim">
+          ← Back
+        </button>
+        <button onClick={onEditTalk} className="font-semibold text-onair">
+          Edit talk
+        </button>
+      </header>
+
+      <div className="shrink-0 text-center">
+        <div className="display text-xs font-semibold uppercase tracking-[0.2em] text-dim">
+          Ready
+        </div>
+        <h1 className="display mt-1 text-2xl font-extrabold leading-tight">
+          {presentation.name || "Untitled talk"}
+        </h1>
+        <div className="digits mt-2 text-5xl font-extrabold text-onair">
+          {fmtClock(total)}
+        </div>
+        <div className="text-sm text-dim">{fmtLong(total)} planned</div>
+      </div>
+
+      <div className="mt-4 flex-1 space-y-2 overflow-y-auto pb-2">
+        {presentation.sections.map((s, i) => (
+          <div key={s.id} className="rounded-xl border border-line bg-panel px-4 py-3">
+            <div className="flex items-center justify-between">
+              <span className="display min-w-0 truncate text-lg font-semibold">
+                {s.name || `Section ${i + 1}`}
+              </span>
+              <span className="digits ml-3 shrink-0 text-xl font-bold text-dim">
+                {fmtClock(s.duration)}
+              </span>
+            </div>
+            {s.notes && (
+              <p className="mt-1 whitespace-pre-wrap text-sm leading-snug text-dim">
+                {s.notes}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="shrink-0 pt-2">
+        {deckButtons}
+        {/* Pick how to run it: rehearsal or the real thing. */}
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <button
+            onClick={() => onStart("test")}
+            className="display flex h-16 flex-col items-center justify-center rounded-xl bg-onair font-extrabold text-stage"
+          >
+            <span className="text-lg leading-tight">▶ Start test run</span>
+            <span className="text-xs font-semibold opacity-80">
+              {left > 0 ? `${left} left to goal` : "goal done ✓"}
+            </span>
+          </button>
+          <button
+            onClick={() => onStart("live")}
+            className="display flex h-16 flex-col items-center justify-center rounded-xl border-2 border-ink font-extrabold text-ink"
+          >
+            <span className="text-lg leading-tight">Start live session</span>
+            <span className="text-xs font-semibold text-dim">on air</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+/** The running talk — mounted only after Start, so the clock begins here. */
+function Run({
+  presentation,
+  mode,
   soundOn,
   onToggleSound,
-  onEnd
-}: Props) {
+  onEnd,
+  overlays,
+  deckButtons
+}: PhaseProps & { mode: Mode }) {
   useWakeLock(true);
   const { cue } = useCues(soundOn);
-  const [openDeck, setOpenDeck] = useState<null | "clue" | "sos" | "qna">(null);
   const [flash, setFlash] = useState({ key: 0, name: "" });
   // Two-tap safety for End talk: first tap arms, second tap ends.
   const [endArmed, setEndArmed] = useState(false);
@@ -39,7 +238,8 @@ export function PresentationMode({
       if (kind === "transition" && nextIndex !== undefined) {
         setFlash((f) => ({
           key: f.key + 1,
-          name: presentation.sections[nextIndex]?.name || `Section ${nextIndex + 1}`
+          name:
+            presentation.sections[nextIndex]?.name || `Section ${nextIndex + 1}`
         }));
       }
     },
@@ -51,7 +251,6 @@ export function PresentationMode({
     onCue
   );
 
-  // Stage-light states for the current section timer.
   const sectionLight = state.overtime
     ? "text-over"
     : state.sectionRemaining <= 30
@@ -66,35 +265,8 @@ export function PresentationMode({
   return (
     <div className="mx-auto flex h-dvh max-w-md flex-col px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
       <TransitionAlert flashKey={flash.key} nextName={flash.name} />
-      {openDeck === "sos" && (
-        <CardsOverlay
-          title="SOS · emergency"
-          accent="sos"
-          notes={presentation.sosNotes.filter((n) => (n.deck ?? "sos") === "sos")}
-          emptyHint="No SOS cards yet. Add what to do when something goes wrong — in the editor."
-          onClose={() => setOpenDeck(null)}
-        />
-      )}
-      {openDeck === "clue" && (
-        <ClueDeckOverlay
-          title="Clue cards"
-          accent="clue"
-          cards={presentation.sosNotes.filter((n) => n.deck === "clue")}
-          emptyHint="No clue cards yet. Create cards in the editor — on stage, tap one to show it full screen while you speak."
-          onClose={() => setOpenDeck(null)}
-        />
-      )}
-      {openDeck === "qna" && (
-        <ClueDeckOverlay
-          title="Q&A"
-          accent="qna"
-          cards={presentation.sosNotes.filter((n) => n.deck === "qna")}
-          emptyHint="No Q&A cards yet. Add expected questions and your short answers in the editor."
-          onClose={() => setOpenDeck(null)}
-        />
-      )}
+      {overlays}
 
-      {/* Fixed top block: lamp + the big talk timer. Never moves. */}
       <header className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className={paused ? "lamp opacity-30" : "lamp"} aria-hidden />
@@ -103,7 +275,7 @@ export function PresentationMode({
               paused ? "text-dim" : "text-onair"
             }`}
           >
-            {paused ? "Paused" : "On air"}
+            {paused ? "Paused" : mode === "test" ? "Test run" : "On air"}
           </span>
         </div>
         <span className="digits text-sm text-dim">
@@ -113,7 +285,9 @@ export function PresentationMode({
 
       <div className="shrink-0 text-center">
         {/* Full-bleed: stretch past the page padding so digits span the whole screen. */}
-        <div className={`digits -mx-5 text-center text-[clamp(4.5rem,31vw,12rem)] font-extrabold leading-[1.02] tracking-[-0.04em] text-onair glow-blue ${paused ? "opacity-40" : ""}`}>
+        <div
+          className={`digits -mx-5 text-center text-[clamp(4.5rem,31vw,12rem)] font-extrabold leading-[1.02] tracking-[-0.04em] text-onair glow-blue ${paused ? "opacity-40" : ""}`}
+        >
           {state.overtime
             ? fmtOver(state.overtimeSeconds)
             : fmtClock(state.totalRemaining)}
@@ -203,30 +377,11 @@ export function PresentationMode({
         >
           {paused ? "▶ Resume" : "❚❚ Pause"}
         </button>
-        <div className="mt-2 grid grid-cols-3 gap-2">
-          <button
-            onClick={() => setOpenDeck("clue")}
-            className="display h-16 rounded-xl border border-onair/60 bg-onair/10 font-bold text-onair"
-          >
-            Clue cards
-          </button>
-          <button
-            onClick={() => setOpenDeck("sos")}
-            className="display h-16 rounded-xl border border-sos/60 bg-sos/10 font-bold tracking-widest text-sos"
-          >
-            SOS
-          </button>
-          <button
-            onClick={() => setOpenDeck("qna")}
-            className="display h-16 rounded-xl border border-qna/60 bg-qna/10 font-bold text-qna"
-          >
-            Q&A
-          </button>
-        </div>
+        <div className="mt-2">{deckButtons}</div>
         <div className="mt-2 grid grid-cols-2 gap-2">
           <button
             onClick={() => {
-              if (endArmed) onEnd(buildReport());
+              if (endArmed) onEnd(buildReport(), mode);
               else setEndArmed(true);
             }}
             className={`display h-16 rounded-xl border font-bold ${

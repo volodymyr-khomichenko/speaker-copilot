@@ -16,6 +16,8 @@ interface Props {
 export function PresentationEditor({ initial, onSave, onCancel }: Props) {
   const [name, setName] = useState(initial.name);
   const [totalMin, setTotalMin] = useState(Math.round(initial.totalTime / 60));
+  const [eventDate, setEventDate] = useState(initial.eventDate ?? "");
+  const [testRunGoal, setTestRunGoal] = useState(initial.testRunGoal ?? 10);
   const [sections, setSections] = useState<Section[]>(initial.sections);
   const [sosNotes, setSosNotes] = useState<SosNote[]>(initial.sosNotes);
 
@@ -51,6 +53,8 @@ export function PresentationEditor({ initial, onSave, onCancel }: Props) {
       ...initial,
       name: name.trim(),
       totalTime,
+      eventDate: eventDate || undefined,
+      testRunGoal: Math.max(0, testRunGoal),
       sections: applyPercents(totalTime, sections),
       sosNotes: sosNotes.filter((n) => n.title.trim() || n.text.trim()),
       updatedAt: Date.now()
@@ -102,6 +106,38 @@ export function PresentationEditor({ initial, onSave, onCancel }: Props) {
           Sections split this time by percent — change the total and every
           section rescales automatically.
         </p>
+      </div>
+
+      {/* When is the talk + how many rehearsals before it */}
+      <div className="mb-6 grid grid-cols-2 gap-3">
+        <div className="rounded-2xl border border-line bg-panel p-4">
+          <label className="mb-1 block text-sm text-dim" htmlFor="event-date">
+            Talk day
+          </label>
+          <input
+            id="event-date"
+            type="date"
+            value={eventDate}
+            onChange={(e) => setEventDate(e.target.value)}
+            className="digits w-full rounded-lg border border-line bg-panel-2 px-2 py-2 font-bold outline-none focus:border-onair"
+          />
+        </div>
+        <div className="rounded-2xl border border-line bg-panel p-4">
+          <label className="mb-1 block text-sm text-dim" htmlFor="run-goal">
+            Test runs goal
+          </label>
+          <input
+            id="run-goal"
+            type="number"
+            min={0}
+            inputMode="numeric"
+            value={testRunGoal}
+            onChange={(e) =>
+              setTestRunGoal(Math.max(0, Number(e.target.value) || 0))
+            }
+            className="digits w-full rounded-lg border border-line bg-panel-2 px-2 py-2 text-center text-xl font-extrabold outline-none focus:border-onair"
+          />
+        </div>
       </div>
 
       <div className="mb-3 flex items-center justify-between">

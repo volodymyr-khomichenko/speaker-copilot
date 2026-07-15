@@ -33,6 +33,12 @@ export interface Presentation {
   name: string;
   /** Total planned talk time in seconds. Sections split it by percent. */
   totalTime: number;
+  /** Date of the live talk (YYYY-MM-DD). Drives the countdown on the list. */
+  eventDate?: string;
+  /** How many rehearsal runs the speaker plans to do before the live talk. */
+  testRunGoal: number;
+  /** How many rehearsal runs are already done. */
+  testRunsDone: number;
   sections: Section[];
   sosNotes: SosNote[];
   createdAt: number;

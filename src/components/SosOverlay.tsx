@@ -1,11 +1,15 @@
+import { useState } from "react";
 import type { SosNote } from "../lib/types";
 import { SOS_CATEGORIES } from "../lib/types";
+import { CardForm } from "./CardForm";
+import { FullCardView } from "./FullCardView";
 
 interface Props {
   title: string;
   accent: "clue" | "sos";
   notes: SosNote[];
   emptyHint: string;
+  onAdd?: (card: { title: string; text: string; category?: string }) => void;
   onClose: () => void;
 }
 
@@ -22,14 +26,36 @@ function groupNotes(notes: SosNote[]): Array<[string, SosNote[]]> {
 }
 
 /**
- * Full-screen card deck overlay. Opens with one tap, closes with one tap.
- * Blue accent = planned clue cards, red accent = SOS emergencies.
+ * Categorized card deck (used for SOS). Tap a card to blow it up full
+ * screen; tap again to come back. New cards can be added right here.
  */
-export function CardsOverlay({ title, accent, notes, emptyHint, onClose }: Props) {
+export function CardsOverlay({
+  title,
+  accent,
+  notes,
+  emptyHint,
+  onAdd,
+  onClose
+}: Props) {
   const head = accent === "sos" ? "text-sos" : "text-onair";
   const border = accent === "sos" ? "border-sos/40" : "border-line";
-
+  const [openId, setOpenId] = useState<string | null>(null);
   const groups = groupNotes(notes);
+  // Swipe order = visual order: category by category.
+  const ordered = groups.flatMap(([, xs]) => xs);
+
+  if (openId && ordered.some((n) => n.id === openId)) {
+    return (
+      <FullCardView
+        cards={ordered}
+        openId={openId}
+        headClass={head}
+        showCategory
+        onNavigate={setOpenId}
+        onBack={() => setOpenId(null)}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-stage/98 backdrop-blur-sm">
@@ -56,9 +82,10 @@ export function CardsOverlay({ title, accent, notes, emptyHint, onClose }: Props
             </h3>
             <div className="space-y-2">
               {xs.map((n) => (
-                <div
+                <button
                   key={n.id}
-                  className={`rounded-2xl border bg-panel p-4 ${border}`}
+                  onClick={() => setOpenId(n.id)}
+                  className={`w-full rounded-2xl border bg-panel p-4 text-left ${border}`}
                 >
                   {n.title && (
                     <div
@@ -67,21 +94,31 @@ export function CardsOverlay({ title, accent, notes, emptyHint, onClose }: Props
                       {n.title}
                     </div>
                   )}
-                  <div className="whitespace-pre-wrap text-lg leading-snug">
+                  <div className="whitespace-pre-wrap leading-snug">
                     {n.text}
                   </div>
-                </div>
+                  <div className="mt-2 text-xs text-dim">
+                    tap to show full screen
+                  </div>
+                </button>
               ))}
             </div>
           </section>
         ))}
+        {onAdd && (
+          <CardForm
+            accentBorder={accent === "sos" ? "border-sos/40" : "border-line"}
+            withCategory
+            onSave={onAdd}
+          />
+        )}
       </div>
 
       <button
         onClick={onClose}
         className="display mx-5 mb-[max(1.25rem,env(safe-area-inset-bottom))] rounded-2xl bg-panel-2 py-4 text-lg font-bold"
       >
-        Back to the talk
+        Close
       </button>
     </div>
   );

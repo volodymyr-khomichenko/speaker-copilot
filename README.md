@@ -26,7 +26,9 @@ During a live talk it's easy to lose track of time or structure. Teleprompters k
 - Screen stays awake during the talk (Wake Lock API)
 - Works offline (PWA), installable on the home screen
 - LocalStorage only — no login, no backend, no cloud
-- Send talks between devices via QR code or link — the talk travels inside the URL itself, no account needed
+- Talk day with a countdown on the list — see how close the talk is
+- Rehearsal goal: plan N test runs (default 10) and watch the counter go down with every finished run
+- Separate small "Start live talk" — the big button is for rehearsals
 
 ## Tech Stack
 

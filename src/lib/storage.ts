@@ -20,7 +20,14 @@ function migrate(p: Presentation): Presentation {
     ...n,
     deck: n.deck ?? ("sos" as const)
   }));
-  return { ...p, totalTime: total, sections: applyPercents(total, sections), sosNotes };
+  return {
+    ...p,
+    totalTime: total,
+    sections: applyPercents(total, sections),
+    sosNotes,
+    testRunGoal: p.testRunGoal ?? 10,
+    testRunsDone: p.testRunsDone ?? 0
+  };
 }
 
 export function loadPresentations(): Presentation[] {
@@ -69,6 +76,8 @@ export function newPresentation(): Presentation {
     id: uid(),
     name: "",
     totalTime,
+    testRunGoal: 10,
+    testRunsDone: 0,
     sections,
     sosNotes: [
       {

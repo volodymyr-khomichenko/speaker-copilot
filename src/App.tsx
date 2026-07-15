@@ -6,7 +6,6 @@ import {
   newPresentation,
   upsertPresentation
 } from "./lib/storage";
-import { consumeImportFromLocation } from "./lib/share";
 import { PresentationList } from "./screens/PresentationList";
 import { PresentationEditor } from "./screens/PresentationEditor";
 import { PresentationMode } from "./screens/PresentationMode";
@@ -24,44 +23,9 @@ export default function App() {
   );
   const [route, setRoute] = useState<Route>({ screen: "list" });
   const [soundOn, setSoundOn] = useState(false);
-  // A talk arriving through a shared link/QR waits for one confirmation tap.
-  const [incoming, setIncoming] = useState<Presentation | null>(
-    consumeImportFromLocation
-  );
+
 
   const byId = (id: string) => presentations.find((p) => p.id === id);
-
-  if (incoming) {
-    return (
-      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-5 text-center">
-        <div className="display text-xs font-semibold uppercase tracking-[0.2em] text-onair">
-          Incoming talk
-        </div>
-        <h1 className="display mt-2 text-2xl font-extrabold leading-tight">
-          {incoming.name || "Untitled talk"}
-        </h1>
-        <p className="mt-1 text-dim">
-          {incoming.sections.length} sections ·{" "}
-          {Math.round(incoming.totalTime / 60)} min
-        </p>
-        <button
-          onClick={() => {
-            setPresentations(upsertPresentation(incoming));
-            setIncoming(null);
-          }}
-          className="display mt-6 w-full rounded-2xl bg-onair py-4 text-lg font-bold text-stage"
-        >
-          Add to my talks
-        </button>
-        <button
-          onClick={() => setIncoming(null)}
-          className="mt-3 w-full rounded-2xl border border-line py-3 font-semibold text-dim"
-        >
-          Dismiss
-        </button>
-      </div>
-    );
-  }
 
   switch (route.screen) {
     case "edit":
@@ -83,7 +47,26 @@ export default function App() {
           presentation={route.presentation}
           soundOn={soundOn}
           onToggleSound={() => setSoundOn((v) => !v)}
-          onEnd={(report) => setRoute({ screen: "summary", report })}
+          onExit={() => setRoute({ screen: "list" })}
+          onEditTalk={() =>
+            setRoute({ screen: "edit", presentation: route.presentation })
+          }
+          onUpdate={(p) => {
+            setPresentations(upsertPresentation(p));
+            setRoute({ screen: "present", presentation: p });
+          }}
+          onEnd={(report, mode) => {
+            // A finished test run counts toward the rehearsal goal.
+            if (mode === "test") {
+              const updated = {
+                ...route.presentation,
+                testRunsDone: (route.presentation.testRunsDone ?? 0) + 1,
+                updatedAt: Date.now()
+              };
+              setPresentations(upsertPresentation(updated));
+            }
+            setRoute({ screen: "summary", report });
+          }}
         />
       );
 
@@ -103,7 +86,7 @@ export default function App() {
             const p = byId(id);
             if (p) setRoute({ screen: "edit", presentation: p });
           }}
-          onStart={(id) => {
+          onOpen={(id) => {
             const p = byId(id);
             if (p) setRoute({ screen: "present", presentation: p });
           }}
