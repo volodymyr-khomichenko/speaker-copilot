@@ -14,18 +14,27 @@ interface Props {
  */
 export function ShareOverlay({ presentation, onClose }: Props) {
   const [qr, setQr] = useState<string | null>(null);
+  const [qrFailed, setQrFailed] = useState(false);
   const [copied, setCopied] = useState(false);
   const url = encodeShareUrl(presentation);
 
   useEffect(() => {
     let alive = true;
+    setQrFailed(false);
+    // Level "L" maximizes QR capacity (~2.9 KB) — talks with many cards
+    // produce long links, and higher correction levels can't fit them.
     QRCode.toDataURL(url, {
+      errorCorrectionLevel: "L",
       margin: 2,
       width: 640,
-      color: { dark: "#0A0B0D", light: "#F5F7FA" }
+      color: { dark: "#0E1116", light: "#FFFFFF" }
     })
-      .then((d) => alive && setQr(d))
-      .catch(() => alive && setQr(null));
+      .then((d) => {
+        if (alive) setQr(d);
+      })
+      .catch(() => {
+        if (alive) setQrFailed(true);
+      });
     return () => {
       alive = false;
     };
@@ -42,7 +51,7 @@ export function ShareOverlay({ presentation, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-stage/97 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex flex-col bg-stage/98 backdrop-blur-sm">
       <button
         onClick={onClose}
         className="flex items-center justify-between px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-3 text-left"
@@ -64,14 +73,22 @@ export function ShareOverlay({ presentation, onClose }: Props) {
           no account, no server storage.
         </p>
 
-        {qr ? (
+        {qr && !qrFailed && (
           <img
             src={qr}
             alt="QR code with the talk"
-            className="mx-auto w-full max-w-xs rounded-2xl"
+            className="mx-auto w-full max-w-xs rounded-2xl border border-line"
           />
-        ) : (
+        )}
+        {!qr && !qrFailed && (
           <p className="py-10 text-center text-dim">Generating QR…</p>
+        )}
+        {qrFailed && (
+          <p className="rounded-xl border border-line bg-panel-2 p-4 text-sm text-dim">
+            This talk is too large to fit into a QR code. Use “Copy link”
+            below instead — the link carries everything, just open it on the
+            other device (send it to yourself in any messenger).
+          </p>
         )}
 
         <button

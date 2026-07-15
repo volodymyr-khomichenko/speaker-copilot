@@ -40,7 +40,7 @@ export function ClueDeckOverlay({ title, accent, cards, emptyHint, onClose }: Pr
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-stage/97 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex flex-col bg-stage/98 backdrop-blur-sm">
       <button
         onClick={onClose}
         className="flex items-center justify-between px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-3 text-left"

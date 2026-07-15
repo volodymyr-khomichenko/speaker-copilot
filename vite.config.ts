@@ -15,8 +15,8 @@ export default defineConfig({
         short_name: "Speaker Copilot",
         description:
           "A stage copilot for live speakers. Timed sections that advance themselves, SOS rescue notes, and a post-talk report.",
-        theme_color: "#0B0D10",
-        background_color: "#0B0D10",
+        theme_color: "#F6F7F9",
+        background_color: "#F6F7F9",
         display: "standalone",
         orientation: "portrait",
         start_url: "/",
