@@ -18,6 +18,26 @@ export interface SosNote {
   deck?: "clue" | "sos" | "qna";
 }
 
+/** Fixed order of situation groups on the Clue cards screen. */
+export const CLUE_CATEGORIES = [
+  "Opening the Presentation",
+  "Presenting Results",
+  "Moving Between Sections",
+  "Discussing Challenges",
+  "Looking Ahead",
+  "Closing the Presentation"
+] as const;
+
+/** Fixed order of answer-situation groups on the Q&A screen. */
+export const QNA_CATEGORIES = [
+  "When You Know the Answer",
+  "When You Need a Moment to Think",
+  "When You Don't Know the Answer",
+  "When the Question Is Challenging",
+  "When You Want to Redirect",
+  "Closing an Answer"
+] as const;
+
 /** Fixed order of rescue-note groups on the SOS screen. */
 export const SOS_CATEGORIES = [
   "Transitions",

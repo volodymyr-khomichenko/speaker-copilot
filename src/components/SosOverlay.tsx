@@ -1,62 +1,132 @@
 import { useState } from "react";
 import type { SosNote } from "../lib/types";
-import { SOS_CATEGORIES } from "../lib/types";
 import { CardForm } from "./CardForm";
 import { FullCardView } from "./FullCardView";
 
 interface Props {
   title: string;
-  accent: "clue" | "sos";
+  accent: "clue" | "sos" | "qna";
   notes: SosNote[];
   emptyHint: string;
+  /** Situation buttons on level 1, in this order. */
+  categories: readonly string[];
+  /** A recognizable glyph per situation — findable in one glance under stress. */
+  glyphs: Record<string, string>;
+  /** Max cards shown per situation (keeps the stress-time list short). */
+  maxPerCategory?: number;
   onAdd?: (card: { title: string; text: string; category?: string }) => void;
   onClose: () => void;
 }
 
-/** Group notes by category, keeping the canonical category order first. */
-function groupNotes(notes: SosNote[]): Array<[string, SosNote[]]> {
-  const map = new Map<string, SosNote[]>();
-  for (const cat of SOS_CATEGORIES) map.set(cat, []);
-  for (const n of notes) {
-    const cat = n.category?.trim() || "Other";
-    if (!map.has(cat)) map.set(cat, []);
-    map.get(cat)!.push(n);
-  }
-  return [...map.entries()].filter(([, xs]) => xs.length > 0);
-}
-
 /**
- * Categorized card deck (used for SOS). Tap a card to blow it up full
- * screen; tap again to come back. New cards can be added right here.
+ * Two-level SOS. Level 1: six big situation buttons — pick what's
+ * happening. Level 2: a short list (max 5) of rescue cards for it.
+ * Tap a card to blow it up full screen; swipe sideways to flip through.
  */
 export function CardsOverlay({
   title,
   accent,
   notes,
   emptyHint,
+  categories: baseCategories,
+  glyphs,
+  maxPerCategory = Infinity,
   onAdd,
   onClose
 }: Props) {
-  const head = accent === "sos" ? "text-sos" : "text-onair";
-  const border = accent === "sos" ? "border-sos/40" : "border-line";
+  const head =
+    accent === "sos" ? "text-sos" : accent === "qna" ? "text-qna" : "text-onair";
+  const frame =
+    accent === "sos"
+      ? "border-sos/40"
+      : accent === "qna"
+        ? "border-qna/40"
+        : "border-line";
+  const [situation, setSituation] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
-  const groups = groupNotes(notes);
-  // Swipe order = visual order: category by category.
-  const ordered = groups.flatMap(([, xs]) => xs);
 
-  if (openId && ordered.some((n) => n.id === openId)) {
+  const categories: string[] = [...baseCategories];
+  if (notes.some((n) => !categories.includes(n.category?.trim() || "Other")))
+    categories.push("Other");
+
+  const inSituation = (cat: string) =>
+    notes
+      .filter((n) => (n.category?.trim() || "Other") === cat)
+      .slice(0, maxPerCategory);
+
+  /* ---- Level 3: one card full screen, swipe within the situation ---- */
+  if (situation && openId) {
+    const cards = inSituation(situation);
+    if (cards.some((c) => c.id === openId)) {
+      return (
+        <FullCardView
+          cards={cards}
+          openId={openId}
+          headClass={head}
+          showCategory
+          onNavigate={setOpenId}
+          onBack={() => setOpenId(null)}
+        />
+      );
+    }
+  }
+
+  /* ---- Level 2: short list of rescue cards for the chosen situation ---- */
+  if (situation) {
+    const cards = inSituation(situation);
     return (
-      <FullCardView
-        cards={ordered}
-        openId={openId}
-        headClass={head}
-        showCategory
-        onNavigate={setOpenId}
-        onBack={() => setOpenId(null)}
-      />
+      <div className="fixed inset-0 z-50 flex flex-col bg-stage/98 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-3">
+          <button onClick={() => setSituation(null)} className="text-dim">
+            ‹ Situations
+          </button>
+          <span className={`display text-lg font-bold tracking-wide ${head}`}>
+            {glyphs[situation] ?? ""} {situation}
+          </span>
+        </div>
+
+        <div className="flex-1 space-y-2 overflow-y-auto px-5 pb-4">
+          {cards.length === 0 && (
+            <p className="pt-10 text-center text-dim">
+              No cards for this situation yet — add one below.
+            </p>
+          )}
+          {cards.map((n) => (
+            <button
+              key={n.id}
+              onClick={() => setOpenId(n.id)}
+              className={`w-full rounded-2xl border bg-panel p-4 text-left ${frame}`}
+            >
+              {n.title && (
+                <div
+                  className={`display mb-1 text-sm font-semibold uppercase tracking-wider ${head}`}
+                >
+                  {n.title}
+                </div>
+              )}
+              <div className="whitespace-pre-wrap leading-snug">{n.text}</div>
+              <div className="mt-2 text-xs text-dim">tap to show full screen</div>
+            </button>
+          ))}
+          {onAdd && (
+            <CardForm
+              accentBorder={frame}
+              onSave={(c) => onAdd({ ...c, category: situation })}
+            />
+          )}
+        </div>
+
+        <button
+          onClick={() => setSituation(null)}
+          className="display mx-5 mb-[max(1.25rem,env(safe-area-inset-bottom))] rounded-2xl bg-panel-2 py-4 text-lg font-bold"
+        >
+          ‹ Back to situations
+        </button>
+      </div>
     );
   }
 
+  /* ---- Level 1: six big situation buttons ---- */
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-stage/98 backdrop-blur-sm">
       <button
@@ -69,49 +139,34 @@ export function CardsOverlay({
         <span className="text-sm text-dim">tap to close</span>
       </button>
 
-      <div className="flex-1 space-y-5 overflow-y-auto px-5 pb-4">
-        {groups.length === 0 && (
-          <p className="pt-10 text-center text-dim">{emptyHint}</p>
+      <p className="px-5 pb-3 text-sm text-dim">What's happening?</p>
+
+      <div className="flex-1 overflow-y-auto px-5 pb-4">
+        {notes.length === 0 && (
+          <p className="pt-6 text-center text-dim">{emptyHint}</p>
         )}
-        {groups.map(([cat, xs]) => (
-          <section key={cat}>
-            <h3
-              className={`display mb-2 border-b border-line pb-1 text-xs font-bold uppercase tracking-[0.2em] ${head}`}
-            >
-              {cat}
-            </h3>
-            <div className="space-y-2">
-              {xs.map((n) => (
-                <button
-                  key={n.id}
-                  onClick={() => setOpenId(n.id)}
-                  className={`w-full rounded-2xl border bg-panel p-4 text-left ${border}`}
-                >
-                  {n.title && (
-                    <div
-                      className={`display mb-1 text-sm font-semibold uppercase tracking-wider ${head}`}
-                    >
-                      {n.title}
-                    </div>
-                  )}
-                  <div className="whitespace-pre-wrap leading-snug">
-                    {n.text}
-                  </div>
-                  <div className="mt-2 text-xs text-dim">
-                    tap to show full screen
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
-        ))}
-        {onAdd && (
-          <CardForm
-            accentBorder={accent === "sos" ? "border-sos/40" : "border-line"}
-            withCategory
-            onSave={onAdd}
-          />
-        )}
+        <div className="grid grid-cols-2 gap-3">
+          {categories.map((cat) => {
+            const count = notes.filter(
+              (n) => (n.category?.trim() || "Other") === cat
+            ).length;
+            return (
+              <button
+                key={cat}
+                onClick={() => setSituation(cat)}
+                className={`flex h-28 flex-col items-center justify-center gap-1 rounded-2xl border bg-panel p-3 ${frame}`}
+              >
+                <span className={`text-2xl ${head}`}>{glyphs[cat] ?? "•"}</span>
+                <span className="display text-center text-sm font-bold leading-tight">
+                  {cat}
+                </span>
+                <span className="text-xs text-dim">
+                  {count > 0 ? `${Math.min(count, maxPerCategory)} cards` : "empty"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <button

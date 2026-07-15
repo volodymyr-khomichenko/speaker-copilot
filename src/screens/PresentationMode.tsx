@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Presentation, RunReport } from "../lib/types";
-import { totalDuration, uid } from "../lib/types";
+import { CLUE_CATEGORIES, QNA_CATEGORIES, SOS_CATEGORIES, totalDuration, uid } from "../lib/types";
 import { fmtClock, fmtLong, fmtOver } from "../lib/time";
 import { usePresentationTimer } from "../hooks/usePresentationTimer";
 import { useCues, type CueKind } from "../hooks/useCues";
 import { useWakeLock } from "../hooks/useWakeLock";
 import { CardsOverlay } from "../components/SosOverlay";
-import { ClueDeckOverlay } from "../components/ClueDeckOverlay";
 import { TransitionAlert } from "../components/TransitionAlert";
 
 type Deck = "clue" | "sos" | "qna";
@@ -49,6 +48,16 @@ export function PresentationMode(props: Props) {
         <CardsOverlay
           title="SOS · emergency"
           accent="sos"
+          categories={SOS_CATEGORIES}
+          glyphs={{
+            Transitions: "⇄",
+            "Buy time": "⏳",
+            "Lost the thread": "✱",
+            "Key numbers": "#",
+            "Core messages": "★",
+            FAQ: "?"
+          }}
+          maxPerCategory={5}
           notes={presentation.sosNotes.filter((n) => (n.deck ?? "sos") === "sos")}
           emptyHint="No SOS cards yet. Add what to do when something goes wrong."
           onAdd={(c) => addCard("sos", c)}
@@ -56,21 +65,39 @@ export function PresentationMode(props: Props) {
         />
       )}
       {openDeck === "clue" && (
-        <ClueDeckOverlay
+        <CardsOverlay
           title="Clue cards"
           accent="clue"
-          cards={presentation.sosNotes.filter((n) => n.deck === "clue")}
-          emptyHint="No clue cards yet. Add a number, a quote, a key phrase — tap a card on stage to show it full screen."
+          categories={CLUE_CATEGORIES}
+          glyphs={{
+            "Opening the Presentation": "▶",
+            "Presenting Results": "◆",
+            "Moving Between Sections": "⇄",
+            "Discussing Challenges": "▲",
+            "Looking Ahead": "✦",
+            "Closing the Presentation": "■"
+          }}
+          notes={presentation.sosNotes.filter((n) => n.deck === "clue")}
+          emptyHint="No clue cards yet. Pick a stage of the talk and add cards for it."
           onAdd={(c) => addCard("clue", c)}
           onClose={() => setOpenDeck(null)}
         />
       )}
       {openDeck === "qna" && (
-        <ClueDeckOverlay
+        <CardsOverlay
           title="Q&A"
           accent="qna"
-          cards={presentation.sosNotes.filter((n) => n.deck === "qna")}
-          emptyHint="No Q&A cards yet. Add expected questions and your short answers."
+          categories={QNA_CATEGORIES}
+          glyphs={{
+            "When You Know the Answer": "✓",
+            "When You Need a Moment to Think": "…",
+            "When You Don't Know the Answer": "○",
+            "When the Question Is Challenging": "▲",
+            "When You Want to Redirect": "↪",
+            "Closing an Answer": "■"
+          }}
+          notes={presentation.sosNotes.filter((n) => n.deck === "qna")}
+          emptyHint="No Q&A cards yet. Pick an answer situation and add phrases for it."
           onAdd={(c) => addCard("qna", c)}
           onClose={() => setOpenDeck(null)}
         />

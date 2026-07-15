@@ -4,15 +4,21 @@ import { SOS_CATEGORIES } from "../lib/types";
 interface Props {
   accentBorder: string;
   withCategory?: boolean;
+  categories?: readonly string[];
   onSave: (card: { title: string; text: string; category?: string }) => void;
 }
 
 /** Inline "add a card" form used inside every deck overlay. */
-export function CardForm({ accentBorder, withCategory, onSave }: Props) {
+export function CardForm({
+  accentBorder,
+  withCategory,
+  categories = SOS_CATEGORIES,
+  onSave
+}: Props) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
-  const [category, setCategory] = useState<string>(SOS_CATEGORIES[0]);
+  const [category, setCategory] = useState<string>(categories[0]);
 
   if (!open) {
     return (
@@ -54,7 +60,7 @@ export function CardForm({ accentBorder, withCategory, onSave }: Props) {
             aria-label="New card category"
             className="rounded-lg border border-line bg-panel-2 px-2 py-2 text-sm text-dim outline-none focus:border-onair"
           >
-            {SOS_CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>

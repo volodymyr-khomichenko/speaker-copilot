@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Presentation, Section, SosNote } from "../lib/types";
-import { applyPercents, SOS_CATEGORIES, uid } from "../lib/types";
+import { applyPercents, CLUE_CATEGORIES, QNA_CATEGORIES, SOS_CATEGORIES, uid } from "../lib/types";
 import { fmtClock, fmtLong } from "../lib/time";
 
 interface Props {
@@ -246,9 +246,10 @@ export function PresentationEditor({ initial, onSave, onCancel }: Props) {
             title: "Clue cards",
             tone: "text-onair",
             hint:
-              "Your own full-screen cards: a number, a quote, a key phrase. On stage, tap a card to blow it up full screen while you speak.",
+              "Planned hints for every stage of the talk: opening, results, transitions, challenges, closing. On stage: pick the stage, tap a card, it goes full screen.",
             add: "+ Add clue card",
-            defaultCat: undefined
+            defaultCat: CLUE_CATEGORIES[0] as string | undefined,
+            cats: CLUE_CATEGORIES as readonly string[]
           },
           {
             deck: "sos" as const,
@@ -257,19 +258,21 @@ export function PresentationEditor({ initial, onSave, onCancel }: Props) {
             hint:
               "For when something goes wrong: lost the thread, need to buy time, tough question from the room. Grouped by category.",
             add: "+ Add SOS card",
-            defaultCat: "Lost the thread" as string | undefined
+            defaultCat: "Lost the thread" as string | undefined,
+            cats: SOS_CATEGORIES as readonly string[]
           },
           {
             deck: "qna" as const,
             title: "Q&A",
             tone: "text-qna",
             hint:
-              "Expected questions and your short answers. Title = the question, text = the answer. Tap a card on stage to show it full screen.",
+              "Ready-made answer phrases for every Q&A situation: you know it, you need a moment, you don't know, it's challenging. Pick the situation, tap a card.",
             add: "+ Add Q&A card",
-            defaultCat: undefined
+            defaultCat: QNA_CATEGORIES[0] as string | undefined,
+            cats: QNA_CATEGORIES as readonly string[]
           }
         ]
-      ).map(({ deck, title, tone, hint, add, defaultCat }) => (
+      ).map(({ deck, title, tone, hint, add, defaultCat, cats }) => (
         <div key={deck}>
           <h2
             className={`display mt-8 mb-1 text-sm font-semibold uppercase tracking-wider ${tone}`}
@@ -302,7 +305,7 @@ export function PresentationEditor({ initial, onSave, onCancel }: Props) {
                         aria-label="Card category"
                         className="rounded-lg border border-line bg-panel-2 px-2 py-2 text-sm text-dim outline-none focus:border-onair"
                       >
-                        {SOS_CATEGORIES.map((c) => (
+                        {(cats ?? SOS_CATEGORIES).map((c) => (
                           <option key={c} value={c}>
                             {c}
                           </option>

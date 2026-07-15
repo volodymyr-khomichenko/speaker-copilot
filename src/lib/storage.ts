@@ -2,6 +2,7 @@ import type { Presentation } from "./types";
 import { applyPercents, uid } from "./types";
 
 const KEY = "scl:presentations:v1";
+const SEED_KEY = "scl:seeded:v1";
 
 /** Older saved talks may lack totalTime/percent — patch them on load. */
 function migrate(p: Presentation): Presentation {
@@ -138,13 +139,6 @@ export function newPresentation(): Presentation {
       },
       {
         id: uid(),
-        title: "Tough question",
-        text: "\u201cGreat question. The short answer is\u2026 and I\u2019m happy to go deeper after the talk.\u201d",
-        category: "FAQ",
-        deck: "qna"
-      },
-      {
-        id: uid(),
         title: "Recap to move on",
         text: "\u201cSo, three things so far: \u2026, \u2026, \u2026. Now \u2014 the next one.\u201d A recap is a bridge and a breather at once.",
         category: "Transitions",
@@ -187,20 +181,6 @@ export function newPresentation(): Presentation {
       },
       {
         id: uid(),
-        title: "\u201cI don\u2019t know\u201d done right",
-        text: "\u201cI don\u2019t have that number with me \u2014 leave me your contact and I\u2019ll send it today.\u201d Honest beats improvised.",
-        category: "FAQ",
-        deck: "qna"
-      },
-      {
-        id: uid(),
-        title: "Hostile question",
-        text: "\u201cThat\u2019s a fair challenge.\u201d Restate it neutrally, answer the neutral version, move on. Never argue from the stage.",
-        category: "FAQ",
-        deck: "qna"
-      },
-      {
-        id: uid(),
         title: "Tech fails",
         text: "\u201cWhile we fix this \u2014 let me tell you the story behind this slide.\u201d The show goes on without the screen.",
         category: "Buy time",
@@ -229,12 +209,287 @@ export function newPresentation(): Presentation {
       },
       {
         id: uid(),
-        title: "Example clue card",
-        text: "Create your own cards here \u2014 a number, a quote, a diagram in words. On stage, tap a card to show it full screen.",
+        title: "That's a great question.",
+        text: "Let me explain how we approached it.",
+        category: "When You Know the Answer",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "From our perspective...",
+        text: "Here's what the data tells us.",
+        category: "When You Know the Answer",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "Based on what we've seen...",
+        text: "This is the conclusion we reached.",
+        category: "When You Know the Answer",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "Let me think about that for a second.",
+        text: "I want to give you an accurate answer.",
+        category: "When You Need a Moment to Think",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "That's an interesting point.",
+        text: "Let me take a moment to organize my thoughts.",
+        category: "When You Need a Moment to Think",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "Before I answer...",
+        text: "I'd like to add a bit of context first.",
+        category: "When You Need a Moment to Think",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "I don't have that information right now.",
+        text: "I'll verify it and follow up afterward.",
+        category: "When You Don't Know the Answer",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "That's a good question.",
+        text: "I don't want to speculate, so I'll confirm the details.",
+        category: "When You Don't Know the Answer",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "I can't answer that with confidence today.",
+        text: "Let me check and get back to you.",
+        category: "When You Don't Know the Answer",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "I understand the concern.",
+        text: "Here's how we're looking at this situation.",
+        category: "When the Question Is Challenging",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "That's a fair point.",
+        text: "Let me explain the reasoning behind our decision.",
+        category: "When the Question Is Challenging",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "I can see why you're asking.",
+        text: "Here's the context that may help.",
+        category: "When the Question Is Challenging",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "That's related, but...",
+        text: "Let me first answer the main question.",
+        category: "When You Want to Redirect",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "Before we go there...",
+        text: "I'd like to finish this point because it's important.",
+        category: "When You Want to Redirect",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "We'll definitely come back to that.",
+        text: "For now, let's stay focused on this topic.",
+        category: "When You Want to Redirect",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "Does that answer your question?",
+        text: "I'm happy to expand if needed.",
+        category: "Closing an Answer",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "Hopefully that provides some context.",
+        text: "Let me know if you'd like me to go deeper.",
+        category: "Closing an Answer",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "If you'd like more detail...",
+        text: "We can discuss that after the presentation or during the Q&A.",
+        category: "Closing an Answer",
+        deck: "qna"
+      },
+      {
+        id: uid(),
+        title: "Start with the Why",
+        text: "Explain why this report matters and what business outcome it supports.",
+        category: "Opening the Presentation",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Set the Agenda",
+        text: "Briefly outline what you'll cover so everyone knows what to expect.",
+        category: "Opening the Presentation",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Create the Context",
+        text: "Provide a quick overview of the reporting period and the business context.",
+        category: "Opening the Presentation",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Big Picture First",
+        text: "Start with the overall performance before diving into specific metrics.",
+        category: "Presenting Results",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Highlight Key Wins",
+        text: "Lead with the biggest achievements before discussing the details.",
+        category: "Presenting Results",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Support with Data",
+        text: "Share the key numbers, then explain what they mean for the business.",
+        category: "Presenting Results",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Bridge to the Next Topic",
+        text: "Wrap up the current section in one sentence and smoothly transition to the next.",
+        category: "Moving Between Sections",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Connect the Story",
+        text: "Show how the previous topic naturally leads into the next discussion.",
+        category: "Moving Between Sections",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Pause and Refocus",
+        text: "Briefly summarize before introducing the next key point.",
+        category: "Moving Between Sections",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Address Challenges",
+        text: "Be honest about what didn't work and briefly explain the key lesson learned.",
+        category: "Discussing Challenges",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Explain the Root Cause",
+        text: "Focus on why it happened instead of who was responsible.",
+        category: "Discussing Challenges",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Share the Learning",
+        text: "Turn every challenge into a clear takeaway and improvement opportunity.",
+        category: "Discussing Challenges",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Focus on Business Impact",
+        text: "Connect marketing results to business goals, not just marketing metrics.",
+        category: "Looking Ahead",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Next Steps",
+        text: "Clearly explain the priorities and actions for the next reporting period.",
+        category: "Looking Ahead",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Future Opportunities",
+        text: "Highlight where the biggest growth potential exists moving forward.",
+        category: "Looking Ahead",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Key Takeaways",
+        text: "Summarize the two or three most important messages from the presentation.",
+        category: "Closing the Presentation",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Strong Closing",
+        text: "End with a confident summary, thank the audience, and invite questions.",
+        category: "Closing the Presentation",
+        deck: "clue"
+      },
+      {
+        id: uid(),
+        title: "Open for Discussion",
+        text: "Encourage feedback, questions, or suggestions for the next steps.",
+        category: "Closing the Presentation",
         deck: "clue"
       }
     ],
     createdAt: now,
     updatedAt: now
   };
+}
+
+/**
+ * First launch: pre-create one ready talk so there's something to open
+ * right away. Seeds only once — if the user deletes it, it stays deleted.
+ */
+export function loadPresentationsWithSeed(): Presentation[] {
+  let list = loadPresentations();
+  let seeded = false;
+  try {
+    seeded = localStorage.getItem(SEED_KEY) === "1";
+  } catch {
+    /* storage unavailable */
+  }
+  if (list.length === 0 && !seeded) {
+    const p = newPresentation();
+    p.name = "Warsaw";
+    p.eventDate = "2026-07-27";
+    p.totalTime = 90 * 60;
+    p.sections = applyPercents(p.totalTime, p.sections);
+    list = [p];
+    savePresentations(list);
+  }
+  try {
+    localStorage.setItem(SEED_KEY, "1");
+  } catch {
+    /* storage unavailable */
+  }
+  return list;
 }

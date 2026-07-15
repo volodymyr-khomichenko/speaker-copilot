@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Presentation, RunReport } from "./lib/types";
 import {
   deletePresentation,
-  loadPresentations,
+  loadPresentationsWithSeed,
   newPresentation,
   upsertPresentation
 } from "./lib/storage";
@@ -19,7 +19,7 @@ type Route =
 
 export default function App() {
   const [presentations, setPresentations] = useState<Presentation[]>(
-    loadPresentations
+    loadPresentationsWithSeed
   );
   const [route, setRoute] = useState<Route>({ screen: "list" });
   const [soundOn, setSoundOn] = useState(false);
