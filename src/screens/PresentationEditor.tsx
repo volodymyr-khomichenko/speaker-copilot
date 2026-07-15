@@ -258,7 +258,7 @@ export function PresentationEditor({ initial, onSave, onCancel }: Props) {
             hint:
               "For when something goes wrong: lost the thread, need to buy time, tough question from the room. Grouped by category.",
             add: "+ Add SOS card",
-            defaultCat: "Lost the thread" as string | undefined,
+            defaultCat: SOS_CATEGORIES[0] as string | undefined,
             cats: SOS_CATEGORIES as readonly string[]
           },
           {

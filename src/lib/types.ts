@@ -40,12 +40,12 @@ export const QNA_CATEGORIES = [
 
 /** Fixed order of rescue-note groups on the SOS screen. */
 export const SOS_CATEGORIES = [
-  "Transitions",
-  "Buy time",
-  "Lost the thread",
-  "Key numbers",
-  "Core messages",
-  "FAQ"
+  "You Lost Your Train of Thought",
+  "You Need a Few Seconds to Think",
+  "You Don't Have the Information",
+  "You're Running Out of Time",
+  "Technical Issues",
+  "Difficult or Unexpected Situation"
 ] as const;
 
 export interface Presentation {

@@ -99,12 +99,12 @@ export function CardsOverlay({
             >
               {n.title && (
                 <div
-                  className={`display mb-1 text-sm font-semibold uppercase tracking-wider ${head}`}
+                  className={`display mb-1 text-base font-bold uppercase tracking-wider ${head}`}
                 >
                   {n.title}
                 </div>
               )}
-              <div className="whitespace-pre-wrap leading-snug">{n.text}</div>
+              <div className="whitespace-pre-wrap text-lg leading-snug">{n.text}</div>
               <div className="mt-2 text-xs text-dim">tap to show full screen</div>
             </button>
           ))}
@@ -145,7 +145,8 @@ export function CardsOverlay({
         {notes.length === 0 && (
           <p className="pt-6 text-center text-dim">{emptyHint}</p>
         )}
-        <div className="grid grid-cols-2 gap-3">
+        {/* One column, one situation per row, big enough to read in panic. */}
+        <div className="space-y-3">
           {categories.map((cat) => {
             const count = notes.filter(
               (n) => (n.category?.trim() || "Other") === cat
@@ -154,14 +155,16 @@ export function CardsOverlay({
               <button
                 key={cat}
                 onClick={() => setSituation(cat)}
-                className={`flex h-28 flex-col items-center justify-center gap-1 rounded-2xl border bg-panel p-3 ${frame}`}
+                className={`flex w-full items-center gap-4 rounded-2xl border bg-panel px-5 py-5 text-left ${frame}`}
               >
-                <span className={`text-2xl ${head}`}>{glyphs[cat] ?? "•"}</span>
-                <span className="display text-center text-sm font-bold leading-tight">
+                <span className={`shrink-0 text-3xl ${head}`}>
+                  {glyphs[cat] ?? "•"}
+                </span>
+                <span className="display min-w-0 flex-1 text-2xl font-extrabold leading-tight">
                   {cat}
                 </span>
-                <span className="text-xs text-dim">
-                  {count > 0 ? `${Math.min(count, maxPerCategory)} cards` : "empty"}
+                <span className="shrink-0 text-sm text-dim">
+                  {count > 0 ? Math.min(count, maxPerCategory) : "–"}
                 </span>
               </button>
             );

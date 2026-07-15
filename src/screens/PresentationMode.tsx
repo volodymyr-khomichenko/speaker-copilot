@@ -50,12 +50,12 @@ export function PresentationMode(props: Props) {
           accent="sos"
           categories={SOS_CATEGORIES}
           glyphs={{
-            Transitions: "⇄",
-            "Buy time": "⏳",
-            "Lost the thread": "✱",
-            "Key numbers": "#",
-            "Core messages": "★",
-            FAQ: "?"
+            "You Lost Your Train of Thought": "✱",
+            "You Need a Few Seconds to Think": "…",
+            "You Don't Have the Information": "○",
+            "You're Running Out of Time": "⏳",
+            "Technical Issues": "⚙",
+            "Difficult or Unexpected Situation": "▲"
           }}
           maxPerCategory={5}
           notes={presentation.sosNotes.filter((n) => (n.deck ?? "sos") === "sos")}

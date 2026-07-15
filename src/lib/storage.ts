@@ -2,7 +2,12 @@ import type { Presentation } from "./types";
 import { applyPercents, uid } from "./types";
 
 const KEY = "scl:presentations:v1";
-const SEED_KEY = "scl:seeded:v1";
+const SEED_VERSION_KEY = "scl:seed-version";
+/**
+ * DEV MODE: bump this on every release to wipe on-device talks and re-seed
+ * the fresh default talk. Remove this reset before real production use.
+ */
+const SEED_VERSION = "23";
 
 /** Older saved talks may lack totalTime/percent — patch them on load. */
 function migrate(p: Presentation): Presentation {
@@ -83,128 +88,128 @@ export function newPresentation(): Presentation {
     sosNotes: [
       {
         id: uid(),
-        title: "Bridge to the next topic",
-        text: "\u201cAnd this brings me to the next point\u2026\u201d",
-        category: "Transitions",
+        title: "Let me rephrase that.",
+        text: "I want to make sure I explain it clearly.",
+        category: "You Lost Your Train of Thought",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Wrap a topic cleanly",
-        text: "\u201cThe takeaway here is simple\u2026\u201d \u2014 one sentence, then move on.",
-        category: "Transitions",
+        title: "Let me come back to the main point.",
+        text: "The key takeaway is...",
+        category: "You Lost Your Train of Thought",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Rephrase",
-        text: "\u201cLet me put this another way.\u201d Pause. Breathe. Sip of water.",
-        category: "Buy time",
+        title: "Let's take a step back.",
+        text: "Here's the most important thing to remember.",
+        category: "You Lost Your Train of Thought",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Turn to the room",
-        text: "\u201cQuick show of hands \u2014 who has run into this?\u201d Scan the room while you regroup.",
-        category: "Buy time",
+        title: "That's a good question.",
+        text: "Let me think about the best way to answer it.",
+        category: "You Need a Few Seconds to Think",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Return to the core",
-        text: "\u201cThe key thing I want you to remember is\u2026\u201d \u2014 restate your main message, the thread will come back.",
-        category: "Lost the thread",
+        title: "Give me a moment.",
+        text: "I want to make sure I answer accurately.",
+        category: "You Need a Few Seconds to Think",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Own it, keep going",
-        text: "\u201cI\u2019ll come back to that detail \u2014 what matters right now is\u2026\u201d Nobody notices a skipped detail.",
-        category: "Lost the thread",
+        title: "Let me gather my thoughts.",
+        text: "I think there are a couple of important points here.",
+        category: "You Need a Few Seconds to Think",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Your numbers",
-        text: "Put the 3\u20135 figures you must not get wrong here: metrics, prices, dates.",
-        category: "Key numbers",
+        title: "I don't have that number with me.",
+        text: "I'll verify it and follow up afterward.",
+        category: "You Don't Have the Information",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Message #1",
-        text: "Write the one sentence this talk exists for. If everything falls apart \u2014 say this.",
-        category: "Core messages",
+        title: "I don't want to guess.",
+        text: "Let me confirm the details before answering.",
+        category: "You Don't Have the Information",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Recap to move on",
-        text: "\u201cSo, three things so far: \u2026, \u2026, \u2026. Now \u2014 the next one.\u201d A recap is a bridge and a breather at once.",
-        category: "Transitions",
+        title: "I don't have the exact data today.",
+        text: "I'll make sure to send it after the meeting.",
+        category: "You Don't Have the Information",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Tell a micro-story",
-        text: "\u201cLet me give you a quick example\u2026\u201d \u2014 a 20-second story you know by heart buys time and adds life.",
-        category: "Buy time",
+        title: "In the interest of time...",
+        text: "Let me focus on the key takeaway.",
+        category: "You're Running Out of Time",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Slow down on purpose",
-        text: "Speaking slower reads as confidence, not confusion. Drop the pace, land every word.",
-        category: "Buy time",
+        title: "I'll keep this brief.",
+        text: "The most important point is...",
+        category: "You're Running Out of Time",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Use the slide",
-        text: "Look at the screen and narrate it: \u201cWhat you see here is\u2026\u201d The slide is your legal cheat sheet.",
-        category: "Lost the thread",
+        title: "To stay on schedule...",
+        text: "I'll summarize this section and move on.",
+        category: "You're Running Out of Time",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Ask the room",
-        text: "\u201cBefore I go on \u2014 any questions so far?\u201d The audience talks, you find the thread.",
-        category: "Lost the thread",
+        title: "It looks like we're having a technical issue.",
+        text: "Let's continue while it's being resolved.",
+        category: "Technical Issues",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Message #2",
-        text: "Your second must-land point. If time runs out \u2014 cut everything except messages #1 and #2.",
-        category: "Core messages",
+        title: "While we fix that...",
+        text: "Let me explain the main idea without the slide.",
+        category: "Technical Issues",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Tech fails",
-        text: "\u201cWhile we fix this \u2014 let me tell you the story behind this slide.\u201d The show goes on without the screen.",
-        category: "Buy time",
+        title: "No problem.",
+        text: "I'll continue from memory, and we'll come back to the visuals.",
+        category: "Technical Issues",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Restart the sentence",
-        text: "Stop mid-sentence, pause, start the sentence again from the top. The room reads it as emphasis.",
-        category: "Lost the thread",
+        title: "That's a valid concern.",
+        text: "Let me explain how we're approaching it.",
+        category: "Difficult or Unexpected Situation",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Energy drop in the room",
-        text: "Change something physical: step forward, raise your voice one notch, ask the room to stand or vote by hand.",
-        category: "Buy time",
+        title: "I appreciate you bringing that up.",
+        text: "Here's the context behind our decision.",
+        category: "Difficult or Unexpected Situation",
         deck: "sos"
       },
       {
         id: uid(),
-        title: "Skipped something important",
-        text: "\u201cOne thing I should have mentioned earlier\u2026\u201d \u2014 nobody knows your plan. Insert it now, no apology.",
-        category: "Lost the thread",
+        title: "Let's separate the facts from the assumptions.",
+        text: "Here's what we know so far.",
+        category: "Difficult or Unexpected Situation",
         deck: "sos"
       },
       {
@@ -465,31 +470,37 @@ export function newPresentation(): Presentation {
   };
 }
 
+/** The default talk every device starts with. */
+function seedTalk(): Presentation {
+  const p = newPresentation();
+  p.name = "Warsaw";
+  p.eventDate = "2026-07-27";
+  p.totalTime = 90 * 60;
+  p.sections = applyPercents(p.totalTime, p.sections);
+  return p;
+}
+
 /**
- * First launch: pre-create one ready talk so there's something to open
- * right away. Seeds only once — if the user deletes it, it stays deleted.
+ * DEV MODE loader: if the stored seed version differs from the current
+ * release, all local talks are replaced with the fresh default talk.
+ * This keeps every device in sync with the latest default content.
  */
 export function loadPresentationsWithSeed(): Presentation[] {
-  let list = loadPresentations();
-  let seeded = false;
+  let stored: string | null = null;
   try {
-    seeded = localStorage.getItem(SEED_KEY) === "1";
+    stored = localStorage.getItem(SEED_VERSION_KEY);
   } catch {
     /* storage unavailable */
   }
-  if (list.length === 0 && !seeded) {
-    const p = newPresentation();
-    p.name = "Warsaw";
-    p.eventDate = "2026-07-27";
-    p.totalTime = 90 * 60;
-    p.sections = applyPercents(p.totalTime, p.sections);
-    list = [p];
-    savePresentations(list);
+  if (stored !== SEED_VERSION) {
+    const p = seedTalk();
+    savePresentations([p]);
+    try {
+      localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
+    } catch {
+      /* storage unavailable */
+    }
+    return [p];
   }
-  try {
-    localStorage.setItem(SEED_KEY, "1");
-  } catch {
-    /* storage unavailable */
-  }
-  return list;
+  return loadPresentations();
 }
