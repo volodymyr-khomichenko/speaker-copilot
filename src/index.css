@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+@theme {
+  /* Four-color stage palette: blue, black, gray, white.
+     Blue is the only chromatic color — it means "attention". */
+  --color-stage: #0a0b0d; /* black — app background */
+  --color-panel: #16181c; /* dark gray — cards */
+  --color-panel-2: #1e2126; /* dark gray — raised surfaces */
+  --color-line: #2a2e35; /* gray hairlines */
+  --color-ink: #f5f7fa; /* white text */
+  --color-dim: #8b919c; /* gray secondary text */
+  --color-onair: #4d9fff; /* blue — brand lamp & accent */
+  --color-cue: #8b919c; /* gray — on schedule, calm */
+  --color-warn: #f5f7fa; /* white — last 30 seconds */
+  --color-over: #4d9fff; /* blue — overtime */
+  --color-sos: #ff5c5c; /* red — emergencies only, nothing else is red */
+  --color-qna: #3ecf8e; /* green — Q&A answers, nothing else is green */
+
+  --font-display: "Archivo Variable", system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--color-stage);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+/* Big stage digits: stable width so the clock never jitters. */
+.digits {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.02em;
+}
+
+.display {
+  font-family: var(--font-display);
+}
+
+/* The "ON AIR" lamp — the app's signature element. */
+.lamp {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: var(--color-onair);
+  box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-onair) 60%, transparent);
+  animation: lamp-breathe 2.4s ease-in-out infinite;
+}
+@keyframes lamp-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Stage glow for the big talk timer. */
+.glow-blue {
+  text-shadow:
+    0 0 28px color-mix(in srgb, var(--color-onair) 55%, transparent),
+    0 0 72px color-mix(in srgb, var(--color-onair) 30%, transparent);
+}
+.glow-over {
+  text-shadow:
+    0 0 24px color-mix(in srgb, var(--color-over) 50%, transparent),
+    0 0 64px color-mix(in srgb, var(--color-over) 30%, transparent);
+}
+
+/* Full-screen light-change flash on section transitions. */
+.stage-flash {
+  animation: stage-flash 900ms ease-out both;
+}
+@keyframes stage-flash {
+  0% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lamp {
+    animation: none;
+  }
+  .stage-flash {
+    animation-duration: 250ms;
+  }
+}
