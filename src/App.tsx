@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { Presentation, RunReport } from "./lib/types";
+import type { Presentation, RunRecord, RunReport } from "./lib/types";
+import { uid } from "./lib/types";
 import {
   deletePresentation,
   loadPresentationsWithSeed,
@@ -9,13 +10,18 @@ import {
 import { PresentationList } from "./screens/PresentationList";
 import { PresentationEditor } from "./screens/PresentationEditor";
 import { PresentationMode } from "./screens/PresentationMode";
-import { Summary } from "./screens/Summary";
+import { RateRun } from "./screens/RateRun";
 
 type Route =
   | { screen: "list" }
   | { screen: "edit"; presentation: Presentation }
   | { screen: "present"; presentation: Presentation }
-  | { screen: "summary"; report: RunReport };
+  | {
+      screen: "rate";
+      presentation: Presentation;
+      mode: "test" | "live";
+      report: RunReport;
+    };
 
 export default function App() {
   const [presentations, setPresentations] = useState<Presentation[]>(
@@ -55,25 +61,50 @@ export default function App() {
             setPresentations(upsertPresentation(p));
             setRoute({ screen: "present", presentation: p });
           }}
-          onEnd={(report, mode) => {
-            // A finished test run counts toward the rehearsal goal.
-            if (mode === "test") {
-              const updated = {
-                ...route.presentation,
-                testRunsDone: (route.presentation.testRunsDone ?? 0) + 1,
-                updatedAt: Date.now()
-              };
-              setPresentations(upsertPresentation(updated));
-            }
-            setRoute({ screen: "summary", report });
-          }}
+          onEnd={(report, mode) =>
+            setRoute({
+              screen: "rate",
+              presentation: route.presentation,
+              mode,
+              report
+            })
+          }
         />
       );
 
-    case "summary":
+    case "rate": {
+      const saveRun = (ratings: Record<string, number>, comment: string) => {
+        const record: RunRecord = {
+          id: uid(),
+          mode: route.mode,
+          endedAt: route.report.endedAt,
+          plannedTotal: route.report.plannedTotal,
+          actualTotal: route.report.actualTotal,
+          ratings,
+          comment
+        };
+        const updated: Presentation = {
+          ...route.presentation,
+          runs: [record, ...(route.presentation.runs ?? [])],
+          testRunsDone:
+            route.mode === "test"
+              ? (route.presentation.testRunsDone ?? 0) + 1
+              : (route.presentation.testRunsDone ?? 0),
+          updatedAt: Date.now()
+        };
+        setPresentations(upsertPresentation(updated));
+        // Back to this talk's card (standby), not to the whole list.
+        setRoute({ screen: "present", presentation: updated });
+      };
       return (
-        <Summary report={route.report} onDone={() => setRoute({ screen: "list" })} />
+        <RateRun
+          report={route.report}
+          mode={route.mode}
+          onSave={saveRun}
+          onSkip={() => saveRun({}, "")}
+        />
       );
+    }
 
     default:
       return (

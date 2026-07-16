@@ -59,10 +59,48 @@ export interface Presentation {
   testRunGoal: number;
   /** How many rehearsal runs are already done. */
   testRunsDone: number;
+  /** History of finished runs with self-assessments. */
+  runs?: RunRecord[];
+  /** Average rating to reach before the talk feels safe. Default 4.00. */
+  readyTarget?: number;
   sections: Section[];
   sosNotes: SosNote[];
   createdAt: number;
   updatedAt: number;
+}
+
+/** Base self-assessment criteria — rated after every run (test & live). */
+export const RUN_CRITERIA_BASE = [
+  "English pronunciation",
+  "Clarity of delivery",
+  "Timing",
+  "Confidence",
+  "Structure & flow"
+] as const;
+
+/** Extra criteria that only make sense with a real audience — live only. */
+export const RUN_CRITERIA_LIVE_EXTRA = [
+  "Goal achievement",
+  "Audience engagement",
+  "Q&A handling"
+] as const;
+
+/** The full criteria list for a given run mode. */
+export const criteriaFor = (mode: "test" | "live"): readonly string[] =>
+  mode === "live"
+    ? [...RUN_CRITERIA_BASE, ...RUN_CRITERIA_LIVE_EXTRA]
+    : RUN_CRITERIA_BASE;
+
+/** A saved run: when, what mode, times, self-ratings, and a note. */
+export interface RunRecord {
+  id: string;
+  mode: "test" | "live";
+  endedAt: number;
+  plannedTotal: number;
+  actualTotal: number;
+  /** Criterion -> 1..5 stars (0 = not rated). */
+  ratings: Record<string, number>;
+  comment: string;
 }
 
 /** Result of one finished (or aborted) run of a talk. */

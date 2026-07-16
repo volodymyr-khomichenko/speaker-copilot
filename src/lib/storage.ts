@@ -7,7 +7,7 @@ const SEED_VERSION_KEY = "scl:seed-version";
  * DEV MODE: bump this on every release to wipe on-device talks and re-seed
  * the fresh default talk. Remove this reset before real production use.
  */
-const SEED_VERSION = "23";
+const SEED_VERSION = "30";
 
 /** Older saved talks may lack totalTime/percent — patch them on load. */
 function migrate(p: Presentation): Presentation {
@@ -32,7 +32,9 @@ function migrate(p: Presentation): Presentation {
     sections: applyPercents(total, sections),
     sosNotes,
     testRunGoal: p.testRunGoal ?? 10,
-    testRunsDone: p.testRunsDone ?? 0
+    testRunsDone: p.testRunsDone ?? 0,
+    runs: p.runs ?? [],
+    readyTarget: p.readyTarget ?? 4
   };
 }
 
@@ -84,6 +86,7 @@ export function newPresentation(): Presentation {
     totalTime,
     testRunGoal: 10,
     testRunsDone: 0,
+    readyTarget: 4,
     sections,
     sosNotes: [
       {
@@ -470,13 +473,77 @@ export function newPresentation(): Presentation {
   };
 }
 
-/** The default talk every device starts with. */
+/** Demo run ratings in base-criteria order, showing week-over-week growth. */
+function demoRatings(v: [number, number, number, number, number]) {
+  return {
+    "English pronunciation": v[0],
+    "Clarity of delivery": v[1],
+    Timing: v[2],
+    Confidence: v[3],
+    "Structure & flow": v[4]
+  };
+}
+
+/**
+ * The default talk every device starts with — including five finished
+ * demo test runs, so the run-history logic explains itself.
+ */
 function seedTalk(): Presentation {
   const p = newPresentation();
   p.name = "Warsaw";
   p.eventDate = "2026-07-27";
   p.totalTime = 90 * 60;
   p.sections = applyPercents(p.totalTime, p.sections);
+  p.testRunsDone = 5;
+  const day = 86400000;
+  const now = Date.now();
+  p.runs = [
+    {
+      id: uid(),
+      mode: "test",
+      endedAt: now - 2 * day,
+      plannedTotal: p.totalTime,
+      actualTotal: 90 * 60 + 20,
+      ratings: demoRatings([4, 4, 5, 4, 5]),
+      comment: "Almost there. Polish the closing and the final call to action."
+    },
+    {
+      id: uid(),
+      mode: "test",
+      endedAt: now - 4 * day,
+      plannedTotal: p.totalTime,
+      actualTotal: 89 * 60 + 45,
+      ratings: demoRatings([4, 4, 4, 4, 4]),
+      comment: "Solid run. Confidence is growing, timing finally on point."
+    },
+    {
+      id: uid(),
+      mode: "test",
+      endedAt: now - 6 * day,
+      plannedTotal: p.totalTime,
+      actualTotal: 91 * 60 + 30,
+      ratings: demoRatings([4, 3, 4, 3, 4]),
+      comment: "Transitions are smoother. Work on pronunciation of key terms."
+    },
+    {
+      id: uid(),
+      mode: "test",
+      endedAt: now - 8 * day,
+      plannedTotal: p.totalTime,
+      actualTotal: 94 * 60 + 10,
+      ratings: demoRatings([3, 3, 3, 3, 4]),
+      comment: "Better pace, still stumbling between sections."
+    },
+    {
+      id: uid(),
+      mode: "test",
+      endedAt: now - 10 * day,
+      plannedTotal: p.totalTime,
+      actualTotal: 98 * 60 + 24,
+      ratings: demoRatings([3, 3, 2, 3, 3]),
+      comment: "Ran way over time. Need to cut the middle section."
+    }
+  ];
   return p;
 }
 

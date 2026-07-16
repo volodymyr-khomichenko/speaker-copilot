@@ -18,6 +18,15 @@ export function PresentationEditor({ initial, onSave, onCancel }: Props) {
   const [totalMin, setTotalMin] = useState(Math.round(initial.totalTime / 60));
   const [eventDate, setEventDate] = useState(initial.eventDate ?? "");
   const [testRunGoal, setTestRunGoal] = useState(initial.testRunGoal ?? 10);
+  // Kept as text so both "4,25" and "4.25" can be typed on any keyboard.
+  const [readyTargetStr, setReadyTargetStr] = useState(
+    String(initial.readyTarget ?? 4)
+  );
+  const parseTarget = (s: string): number => {
+    const v = Number(s.replace(",", "."));
+    if (!Number.isFinite(v)) return 4;
+    return Math.min(5, Math.max(1, v));
+  };
   const [sections, setSections] = useState<Section[]>(initial.sections);
   const [sosNotes, setSosNotes] = useState<SosNote[]>(initial.sosNotes);
 
@@ -55,6 +64,7 @@ export function PresentationEditor({ initial, onSave, onCancel }: Props) {
       totalTime,
       eventDate: eventDate || undefined,
       testRunGoal: Math.max(0, testRunGoal),
+      readyTarget: parseTarget(readyTargetStr),
       sections: applyPercents(totalTime, sections),
       sosNotes: sosNotes.filter((n) => n.title.trim() || n.text.trim()),
       updatedAt: Date.now()
@@ -137,6 +147,36 @@ export function PresentationEditor({ initial, onSave, onCancel }: Props) {
             }
             className="digits w-full rounded-lg border border-line bg-panel-2 px-2 py-2 text-center text-xl font-extrabold outline-none focus:border-onair"
           />
+        </div>
+        <div className="col-span-2 rounded-2xl border border-line bg-panel p-4">
+          <label className="mb-1 block text-sm text-dim" htmlFor="ready-target">
+            Readiness target (average ★ to reach before the talk)
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="ready-target"
+              type="text"
+              inputMode="decimal"
+              value={readyTargetStr}
+              onChange={(e) => {
+                // Digits plus a single comma or dot — nothing else.
+                const raw = e.target.value.replace(/[^0-9.,]/g, "");
+                const firstSep = raw.search(/[.,]/);
+                const cleaned =
+                  firstSep === -1
+                    ? raw
+                    : raw.slice(0, firstSep + 1) +
+                      raw.slice(firstSep + 1).replace(/[.,]/g, "");
+                setReadyTargetStr(cleaned);
+              }}
+              onBlur={() => setReadyTargetStr(String(parseTarget(readyTargetStr)))}
+              placeholder="4.00"
+              className="digits w-24 rounded-lg border border-line bg-panel-2 px-2 py-2 text-center text-xl font-extrabold outline-none focus:border-onair"
+            />
+            <span className="text-sm text-dim">
+              of 5 · default 4.00, raise it if you want a stricter bar
+            </span>
+          </div>
         </div>
       </div>
 

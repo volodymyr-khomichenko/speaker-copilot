@@ -7,6 +7,7 @@ import { useCues, type CueKind } from "../hooks/useCues";
 import { useWakeLock } from "../hooks/useWakeLock";
 import { CardsOverlay } from "../components/SosOverlay";
 import { TransitionAlert } from "../components/TransitionAlert";
+import { RunHistoryOverlay } from "../components/RunHistoryOverlay";
 
 type Deck = "clue" | "sos" | "qna";
 
@@ -157,8 +158,10 @@ function Standby({
   deckButtons,
   onExit,
   onEditTalk,
+  onUpdate,
   onStart
 }: PhaseProps & { onStart: (mode: Mode) => void }) {
+  const [historyOpen, setHistoryOpen] = useState(false);
   const total = totalDuration(presentation);
   const left = Math.max(
     0,
@@ -167,6 +170,31 @@ function Standby({
   return (
     <div className="mx-auto flex h-dvh max-w-md flex-col px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
       {overlays}
+      {historyOpen && (
+        <RunHistoryOverlay
+          runs={presentation.runs ?? []}
+          goal={presentation.testRunGoal ?? 10}
+          done={presentation.testRunsDone ?? 0}
+          target={presentation.readyTarget ?? 4}
+          onAddToGoal={(n) =>
+            onUpdate({
+              ...presentation,
+              testRunGoal: (presentation.testRunGoal ?? 10) + n,
+              updatedAt: Date.now()
+            })
+          }
+          onUpdateRun={(id, ratings, comment) =>
+            onUpdate({
+              ...presentation,
+              runs: (presentation.runs ?? []).map((r) =>
+                r.id === id ? { ...r, ratings, comment } : r
+              ),
+              updatedAt: Date.now()
+            })
+          }
+          onClose={() => setHistoryOpen(false)}
+        />
+      )}
 
       <header className="mb-3 flex items-center justify-between">
         <button onClick={onExit} className="text-dim">
@@ -188,6 +216,12 @@ function Standby({
           {fmtClock(total)}
         </div>
         <div className="text-sm text-dim">{fmtLong(total)} planned</div>
+        <button
+          onClick={() => setHistoryOpen(true)}
+          className="mt-1 text-sm font-semibold text-dim underline underline-offset-4"
+        >
+          Run history · {(presentation.runs ?? []).length}
+        </button>
       </div>
 
       <div className="mt-4 flex-1 space-y-2 overflow-y-auto pb-2">
@@ -417,7 +451,11 @@ function Run({
                 : "border-line bg-panel text-dim"
             }`}
           >
-            {endArmed ? "Tap again to end" : "End talk"}
+            {endArmed
+              ? "Tap again to end"
+              : mode === "test"
+                ? "End test run"
+                : "End live session"}
           </button>
           <button
             onClick={onToggleSound}
