@@ -7,7 +7,7 @@ const SEED_VERSION_KEY = "scl:seed-version";
  * DEV MODE: bump this on every release to wipe on-device talks and re-seed
  * the fresh default talk. Remove this reset before real production use.
  */
-const SEED_VERSION = "30";
+const SEED_VERSION = "33";
 
 /** Older saved talks may lack totalTime/percent — patch them on load. */
 function migrate(p: Presentation): Presentation {
@@ -492,7 +492,7 @@ function seedTalk(): Presentation {
   const p = newPresentation();
   p.name = "Warsaw";
   p.eventDate = "2026-07-27";
-  p.totalTime = 90 * 60;
+  p.totalTime = 45 * 60;
   p.sections = applyPercents(p.totalTime, p.sections);
   p.testRunsDone = 5;
   const day = 86400000;
@@ -503,7 +503,7 @@ function seedTalk(): Presentation {
       mode: "test",
       endedAt: now - 2 * day,
       plannedTotal: p.totalTime,
-      actualTotal: 90 * 60 + 20,
+      actualTotal: 45 * 60 + 10,
       ratings: demoRatings([4, 4, 5, 4, 5]),
       comment: "Almost there. Polish the closing and the final call to action."
     },
@@ -512,7 +512,7 @@ function seedTalk(): Presentation {
       mode: "test",
       endedAt: now - 4 * day,
       plannedTotal: p.totalTime,
-      actualTotal: 89 * 60 + 45,
+      actualTotal: 44 * 60 + 52,
       ratings: demoRatings([4, 4, 4, 4, 4]),
       comment: "Solid run. Confidence is growing, timing finally on point."
     },
@@ -521,7 +521,7 @@ function seedTalk(): Presentation {
       mode: "test",
       endedAt: now - 6 * day,
       plannedTotal: p.totalTime,
-      actualTotal: 91 * 60 + 30,
+      actualTotal: 45 * 60 + 45,
       ratings: demoRatings([4, 3, 4, 3, 4]),
       comment: "Transitions are smoother. Work on pronunciation of key terms."
     },
@@ -530,7 +530,7 @@ function seedTalk(): Presentation {
       mode: "test",
       endedAt: now - 8 * day,
       plannedTotal: p.totalTime,
-      actualTotal: 94 * 60 + 10,
+      actualTotal: 47 * 60 + 5,
       ratings: demoRatings([3, 3, 3, 3, 4]),
       comment: "Better pace, still stumbling between sections."
     },
@@ -539,7 +539,7 @@ function seedTalk(): Presentation {
       mode: "test",
       endedAt: now - 10 * day,
       plannedTotal: p.totalTime,
-      actualTotal: 98 * 60 + 24,
+      actualTotal: 49 * 60 + 12,
       ratings: demoRatings([3, 3, 2, 3, 3]),
       comment: "Ran way over time. Need to cut the middle section."
     }

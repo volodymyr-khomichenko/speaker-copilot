@@ -103,11 +103,13 @@ export function PresentationEditor({ initial, onSave, onCancel }: Props) {
         <div className="flex items-center gap-2">
           <input
             id="total-time"
-            type="number"
-            min={1}
+            type="text"
             inputMode="numeric"
-            value={totalMin}
-            onChange={(e) => setTotalMin(Math.max(0, Number(e.target.value) || 0))}
+            value={String(totalMin)}
+            onChange={(e) =>
+              // Digits only; Number() drops any leading zeros ("045" -> 45).
+              setTotalMin(Number(e.target.value.replace(/\D/g, "")) || 0)
+            }
             className="digits w-24 rounded-lg border border-line bg-panel-2 px-3 py-2 text-center text-2xl font-extrabold outline-none focus:border-onair"
           />
           <span className="text-dim">minutes</span>
@@ -138,12 +140,11 @@ export function PresentationEditor({ initial, onSave, onCancel }: Props) {
           </label>
           <input
             id="run-goal"
-            type="number"
-            min={0}
+            type="text"
             inputMode="numeric"
-            value={testRunGoal}
+            value={String(testRunGoal)}
             onChange={(e) =>
-              setTestRunGoal(Math.max(0, Number(e.target.value) || 0))
+              setTestRunGoal(Number(e.target.value.replace(/\D/g, "")) || 0)
             }
             className="digits w-full rounded-lg border border-line bg-panel-2 px-2 py-2 text-center text-xl font-extrabold outline-none focus:border-onair"
           />
@@ -205,14 +206,12 @@ export function PresentationEditor({ initial, onSave, onCancel }: Props) {
               />
               <div className="flex items-center gap-1">
                 <input
-                  type="number"
-                  min={0}
-                  max={100}
+                  type="text"
                   inputMode="numeric"
-                  value={s.percent}
+                  value={String(s.percent)}
                   onChange={(e) =>
                     patchSection(s.id, {
-                      percent: Math.max(0, Number(e.target.value) || 0)
+                      percent: Number(e.target.value.replace(/\D/g, "")) || 0
                     })
                   }
                   aria-label={`Section ${i + 1} share in percent`}

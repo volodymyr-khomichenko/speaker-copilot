@@ -192,6 +192,20 @@ function Standby({
               updatedAt: Date.now()
             })
           }
+          onDeleteRun={(id) => {
+            const runs = presentation.runs ?? [];
+            const victim = runs.find((r) => r.id === id);
+            onUpdate({
+              ...presentation,
+              runs: runs.filter((r) => r.id !== id),
+              // A deleted test run gives its attempt back to the goal.
+              testRunsDone:
+                victim?.mode === "test"
+                  ? Math.max(0, (presentation.testRunsDone ?? 0) - 1)
+                  : (presentation.testRunsDone ?? 0),
+              updatedAt: Date.now()
+            });
+          }}
           onClose={() => setHistoryOpen(false)}
         />
       )}

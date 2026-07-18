@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { RunRecord } from "../lib/types";
 import { criteriaFor } from "../lib/types";
 import { fmtClock } from "../lib/time";
@@ -11,6 +11,8 @@ interface Props {
   target: number;
   onAddToGoal: (n: number) => void;
   onUpdateRun: (id: string, ratings: Record<string, number>, comment: string) => void;
+  /** Removes a run; a deleted test run returns its attempt to the goal. */
+  onDeleteRun: (id: string) => void;
   onClose: () => void;
 }
 
@@ -38,6 +40,7 @@ export function RunHistoryOverlay({
   target,
   onAddToGoal,
   onUpdateRun,
+  onDeleteRun,
   onClose
 }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -91,6 +94,10 @@ export function RunHistoryOverlay({
             run={r}
             onSave={(ratings, comment) => {
               onUpdateRun(r.id, ratings, comment);
+              setOpenId(null);
+            }}
+            onDelete={() => {
+              onDeleteRun(r.id);
               setOpenId(null);
             }}
           />
@@ -164,6 +171,10 @@ export function RunHistoryOverlay({
                       run={r}
                       onSave={(ratings, comment) => {
                         onUpdateRun(r.id, ratings, comment);
+                        setOpenId(null);
+                      }}
+                      onDelete={() => {
+                        onDeleteRun(r.id);
                         setOpenId(null);
                       }}
                     />
@@ -246,15 +257,24 @@ export function RunHistoryOverlay({
 /** Expanded run: fully editable stars and comment — rate now or fix later. */
 function RunDetail({
   run,
-  onSave
+  onSave,
+  onDelete
 }: {
   run: RunRecord;
   onSave: (ratings: Record<string, number>, comment: string) => void;
+  onDelete: () => void;
 }) {
   const [ratings, setRatings] = useState<Record<string, number>>({
     ...run.ratings
   });
   const [comment, setComment] = useState(run.comment);
+  // Two-tap delete: first tap arms, second tap removes the run.
+  const [delArmed, setDelArmed] = useState(false);
+  useEffect(() => {
+    if (!delArmed) return;
+    const t = setTimeout(() => setDelArmed(false), 3000);
+    return () => clearTimeout(t);
+  }, [delArmed]);
   const unrated = Object.values(run.ratings).filter((v) => v > 0).length === 0;
 
   return (
@@ -299,6 +319,23 @@ function RunDetail({
         className="display w-full rounded-xl bg-onair py-2.5 font-bold text-stage"
       >
         Save
+      </button>
+      <button
+        onClick={() => {
+          if (delArmed) onDelete();
+          else setDelArmed(true);
+        }}
+        className={`w-full rounded-xl border py-2.5 text-sm font-bold ${
+          delArmed
+            ? "border-sos bg-sos text-stage"
+            : "border-sos/60 bg-sos/10 text-sos"
+        }`}
+      >
+        {delArmed
+          ? "Tap again to delete this run"
+          : run.mode === "test"
+            ? "Delete run (returns the attempt to the goal)"
+            : "Delete run"}
       </button>
     </div>
   );
