@@ -21,6 +21,19 @@ function daysUntil(dateStr?: string): number | null {
   return Math.round((target.getTime() - today.getTime()) / 86400000);
 }
 
+/** Final live score of a talk (latest rated live run), e.g. "4.50". */
+function liveScore(p: Presentation): string | null {
+  const live = (p.runs ?? [])
+    .filter((r) => r.mode === "live")
+    .sort((a, b) => b.endedAt - a.endedAt);
+  for (const r of live) {
+    const vals = Object.values(r.ratings).filter((v) => v > 0);
+    if (vals.length)
+      return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2);
+  }
+  return null;
+}
+
 function countdown(d: number): { text: string; tone: string } {
   if (d > 1) return { text: `in ${d} days`, tone: d <= 7 ? "text-onair" : "text-dim" };
   if (d === 1) return { text: "tomorrow", tone: "text-onair" };
@@ -84,11 +97,37 @@ export function PresentationList({
         {presentations.map((p) => {
           const total = totalDuration(p);
           const days = daysUntil(p.eventDate);
+          const isPast = days !== null && days < 0;
+          const score = liveScore(p);
           const canRun = p.sections.length > 0 && total > 0;
           return (
-            <div key={p.id} className="rounded-2xl border border-line bg-panel p-4">
+            <div
+              key={p.id}
+              className={`rounded-2xl border p-4 ${
+                isPast
+                  ? "border-line bg-panel-2/70"
+                  : "border-onair/40 bg-panel"
+              }`}
+            >
               <div className="mb-3">
-                <div className="display text-lg font-bold leading-tight">
+                {days !== null && (
+                  <span
+                    className={`display mb-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${
+                      isPast
+                        ? "bg-qna/15 text-qna"
+                        : "bg-onair/15 text-onair"
+                    }`}
+                  >
+                    {isPast
+                      ? `✓ Completed${score ? ` · ★ ${score}` : ""}`
+                      : "Upcoming"}
+                  </span>
+                )}
+                <div
+                  className={`display text-lg font-bold leading-tight ${
+                    isPast ? "text-dim" : ""
+                  }`}
+                >
                   {p.name || "Untitled talk"}
                 </div>
                 <div className="mt-0.5 text-sm text-dim">
@@ -114,7 +153,11 @@ export function PresentationList({
                 <button
                   onClick={() => onOpen(p.id)}
                   disabled={!canRun}
-                  className="display flex-1 rounded-xl bg-onair py-3 font-bold text-stage disabled:opacity-40"
+                  className={`display flex-1 rounded-xl py-3 font-bold disabled:opacity-40 ${
+                    isPast
+                      ? "border border-line bg-panel text-dim"
+                      : "bg-onair text-stage"
+                  }`}
                 >
                   Open talk
                 </button>
@@ -155,7 +198,15 @@ export function PresentationList({
       </button>
 
       <footer className="mt-auto pt-8 text-center text-xs text-dim">
-        © {new Date().getFullYear()} Speaker Copilot · built for live speakers
+        © {new Date().getFullYear()} Speaker Copilot · built by{" "}
+        <a
+          href="https://khomichenko.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-onair underline underline-offset-2"
+        >
+          Volodymyr Khomichenko
+        </a>
       </footer>
     </div>
   );

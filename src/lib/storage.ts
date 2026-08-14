@@ -4,10 +4,11 @@ import { applyPercents, uid } from "./types";
 const KEY = "scl:presentations:v1";
 const SEED_VERSION_KEY = "scl:seed-version";
 /**
- * DEV MODE: bump this on every release to wipe on-device talks and re-seed
- * the fresh default talk. Remove this reset before real production use.
+ * RELEASE MODE: this value is stable and must never be bumped again.
+ * Devices still on a dev seed get one final reset to the demo talks;
+ * after that, user data is never touched by releases.
  */
-const SEED_VERSION = "33";
+const SEED_VERSION = "release-1";
 
 /** Older saved talks may lack totalTime/percent — patch them on load. */
 function migrate(p: Presentation): Presentation {
@@ -473,7 +474,7 @@ export function newPresentation(): Presentation {
   };
 }
 
-/** Demo run ratings in base-criteria order, showing week-over-week growth. */
+/** Demo run ratings in base-criteria order. */
 function demoRatings(v: [number, number, number, number, number]) {
   return {
     "English pronunciation": v[0],
@@ -484,73 +485,148 @@ function demoRatings(v: [number, number, number, number, number]) {
   };
 }
 
+/** Live demo ratings: 5 base + 3 live-only criteria. */
+function demoRatingsLive(
+  v: [number, number, number, number, number, number, number, number]
+) {
+  return {
+    ...demoRatings([v[0], v[1], v[2], v[3], v[4]]),
+    "Goal achievement": v[5],
+    "Audience engagement": v[6],
+    "Q&A handling": v[7]
+  };
+}
+
+const DAY = 86400000;
+const isoDate = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
+
 /**
- * The default talk every device starts with — including five finished
- * demo test runs, so the run-history logic explains itself.
+ * Demo talk #1 — an upcoming talk, mid-preparation: rehearsals in
+ * progress, average still below the readiness target.
  */
-function seedTalk(): Presentation {
+function buildFutureTalk(): Presentation {
   const p = newPresentation();
-  p.name = "Warsaw";
-  p.eventDate = "2026-07-27";
-  p.totalTime = 45 * 60;
-  p.sections = applyPercents(p.totalTime, p.sections);
-  p.testRunsDone = 5;
-  const day = 86400000;
-  const now = Date.now();
-  p.runs = [
+  p.name = "Demo · Future Talk";
+  p.eventDate = "2026-09-27";
+  p.totalTime = 30 * 60;
+  p.sections = applyPercents(p.totalTime, [
     {
       id: uid(),
-      mode: "test",
-      endedAt: now - 2 * day,
-      plannedTotal: p.totalTime,
-      actualTotal: 45 * 60 + 10,
-      ratings: demoRatings([4, 4, 5, 4, 5]),
-      comment: "Almost there. Polish the closing and the final call to action."
+      name: "Opening & hook",
+      percent: 15,
+      duration: 0,
+      notes: "Why this talk matters. One-line agenda."
     },
     {
       id: uid(),
-      mode: "test",
-      endedAt: now - 4 * day,
-      plannedTotal: p.totalTime,
-      actualTotal: 44 * 60 + 52,
-      ratings: demoRatings([4, 4, 4, 4, 4]),
-      comment: "Solid run. Confidence is growing, timing finally on point."
+      name: "Core story",
+      percent: 55,
+      duration: 0,
+      notes: "Three key points. Big picture first, then the data."
     },
     {
       id: uid(),
-      mode: "test",
-      endedAt: now - 6 * day,
-      plannedTotal: p.totalTime,
-      actualTotal: 45 * 60 + 45,
-      ratings: demoRatings([4, 3, 4, 3, 4]),
-      comment: "Transitions are smoother. Work on pronunciation of key terms."
+      name: "Case study",
+      percent: 15,
+      duration: 0,
+      notes: "The example — key numbers are on a clue card."
     },
     {
       id: uid(),
-      mode: "test",
-      endedAt: now - 8 * day,
-      plannedTotal: p.totalTime,
-      actualTotal: 47 * 60 + 5,
-      ratings: demoRatings([3, 3, 3, 3, 4]),
-      comment: "Better pace, still stumbling between sections."
-    },
-    {
-      id: uid(),
-      mode: "test",
-      endedAt: now - 10 * day,
-      plannedTotal: p.totalTime,
-      actualTotal: 49 * 60 + 12,
-      ratings: demoRatings([3, 3, 2, 3, 3]),
-      comment: "Ran way over time. Need to cut the middle section."
+      name: "Closing & CTA",
+      percent: 15,
+      duration: 0,
+      notes: "Two takeaways. Invite questions."
     }
+  ]);
+  p.testRunGoal = 10;
+  p.testRunsDone = 4;
+  const runData: Array<
+    [number, [number, number, number, number, number], number, string]
+  > = [
+    [2, [4, 4, 4, 4, 4], 30 * 60 + 40, "Getting close. Tighten the case study."],
+    [4, [4, 3, 4, 4, 4], 31 * 60 + 20, "Better flow. Watch the pace in the core story."],
+    [6, [3, 3, 4, 3, 4], 32 * 60 + 30, "Opening works now. Middle still drifts."],
+    [8, [3, 3, 3, 3, 3], 34 * 60 + 10, "First full run. Way over time on the core story."]
   ];
+  p.runs = runData.map(([d, r, actual, comment]) => ({
+    id: uid(),
+    mode: "test" as const,
+    endedAt: Date.now() - d * DAY,
+    plannedTotal: p.totalTime,
+    actualTotal: actual,
+    ratings: demoRatings(r),
+    comment
+  }));
   return p;
 }
 
 /**
- * DEV MODE loader: if the stored seed version differs from the current
- * release, all local talks are replaced with the fresh default talk.
- * This keeps every device in sync with the latest default content.
+ * Demo talk #2 — a finished talk: rehearsal goal completed, readiness
+ * reached, and a live session with a final score above target.
+ */
+function buildPastTalk(): Presentation {
+  const now = Date.now();
+  const p = newPresentation();
+  p.name = "Demo · Past Talk";
+  p.eventDate = isoDate(now - 10 * DAY);
+  p.totalTime = 20 * 60;
+  p.testRunGoal = 10;
+  p.testRunsDone = 10;
+  const ratingsLadder: Array<[number, number, number, number, number]> = [
+    [3, 3, 2, 3, 3],
+    [3, 3, 3, 3, 3],
+    [3, 3, 3, 4, 3],
+    [3, 4, 3, 4, 4],
+    [4, 3, 4, 4, 4],
+    [4, 4, 4, 4, 4],
+    [4, 4, 4, 4, 5],
+    [4, 4, 5, 4, 5],
+    [5, 4, 5, 4, 5],
+    [5, 4, 5, 5, 5]
+  ];
+  const comments = [
+    "Rough first run — over time everywhere.",
+    "Cut two slides from the middle. Better.",
+    "Confidence up. Timing still loose.",
+    "Structure finally clicks.",
+    "Pronunciation drills paid off.",
+    "Solid, on time. Repeat tomorrow.",
+    "Closing lands now.",
+    "Nearly clean. One stumble in Q&A prep.",
+    "Best run yet. Above target.",
+    "Ready. Locking the script here."
+  ];
+  const actuals = [
+    23 * 60 + 40, 22 * 60 + 50, 22 * 60 + 5, 21 * 60 + 30, 21 * 60,
+    20 * 60 + 25, 20 * 60 + 15, 20 * 60 + 5, 19 * 60 + 58, 20 * 60 + 2
+  ];
+  p.runs = ratingsLadder.map((r, i) => ({
+    id: uid(),
+    mode: "test" as const,
+    endedAt: now - (32 - i * 2) * DAY,
+    plannedTotal: p.totalTime,
+    actualTotal: actuals[i],
+    ratings: demoRatings(r),
+    comment: comments[i]
+  }));
+  // The live session itself — the headline result.
+  p.runs.unshift({
+    id: uid(),
+    mode: "live",
+    endedAt: now - 10 * DAY,
+    plannedTotal: p.totalTime,
+    actualTotal: 20 * 60 + 12,
+    ratings: demoRatingsLive([5, 4, 5, 4, 5, 4, 5, 4]),
+    comment:
+      "Finished right on time. The room stayed with me — best delivery yet."
+  });
+  return p;
+}
+
+/**
+ * Seed once: new devices (and devices still on a dev seed) get the two
+ * demo talks. From release-1 on, user data is never reset by updates.
  */
 export function loadPresentationsWithSeed(): Presentation[] {
   let stored: string | null = null;
@@ -560,14 +636,14 @@ export function loadPresentationsWithSeed(): Presentation[] {
     /* storage unavailable */
   }
   if (stored !== SEED_VERSION) {
-    const p = seedTalk();
-    savePresentations([p]);
+    const list = [buildFutureTalk(), buildPastTalk()];
+    savePresentations(list);
     try {
       localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
     } catch {
       /* storage unavailable */
     }
-    return [p];
+    return list;
   }
   return loadPresentations();
 }
