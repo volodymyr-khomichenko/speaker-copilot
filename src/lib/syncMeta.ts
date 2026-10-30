@@ -2,6 +2,8 @@
 
 const EVER_KEY = "scl:sync-ever";
 const DIRTY_KEY = "scl:sync-dirty";
+const REV_KEY = "scl:sync-rev";
+const USER_KEY = "scl:sync-user";
 const HOLD_KEY = "scl:sync-hold";
 const TOMB_KEY = "scl:sync-tombstones";
 const DEMO_KEY = "scl:untouched-demo-ids";
@@ -40,8 +42,15 @@ export function isDirty(): boolean {
   return read(DIRTY_KEY) === "1";
 }
 
+/** Bumps on every user edit so an in-flight upload can see that local data moved. */
+export function currentRevision(): number {
+  const n = Number(read(REV_KEY));
+  return Number.isFinite(n) ? n : 0;
+}
+
 export function setDirty(): void {
   write(DIRTY_KEY, "1");
+  write(REV_KEY, String(currentRevision() + 1));
 }
 
 export function clearDirty(): void {
@@ -67,6 +76,15 @@ export function clearHold(): void {
   } catch {
     /* ignore */
   }
+}
+
+export function lastSyncUser(): string | null {
+  const id = read(USER_KEY);
+  return id && id.length > 0 ? id : null;
+}
+
+export function setLastSyncUser(id: string): void {
+  write(USER_KEY, id);
 }
 
 export function loadTombstones(): Tombstone[] {

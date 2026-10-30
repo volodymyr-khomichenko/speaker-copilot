@@ -11,10 +11,14 @@ export interface CloudApi {
   email: string | null;
   status: SyncStatus;
   notice: string;
+  accountChoice: boolean;
   signIn: () => void;
   signOut: () => void;
   deleteCloud: () => void;
   retry: () => void;
+  keepSeparate: () => void;
+  mergeAccounts: () => void;
+  dismissAccountChoice: () => void;
 }
 
 /**
@@ -25,7 +29,8 @@ export function useCloud(onPresentations: (list: Presentation[]) => void): Cloud
   const [snap, setSnap] = useState<CloudSnapshot>({
     email: null,
     status: "idle",
-    notice: ""
+    notice: "",
+    accountChoice: false
   });
   const handle = useRef<CloudHandle | null>(null);
   const onList = useRef(onPresentations);
@@ -52,7 +57,8 @@ export function useCloud(onPresentations: (list: Presentation[]) => void): Cloud
           setSnap({
             email: null,
             status: "error",
-            notice: "Couldn't start sync. Your talks on this device are unchanged."
+            notice: "Couldn't start sync. Your talks on this device are unchanged.",
+            accountChoice: false
           });
         }
       });
@@ -68,6 +74,7 @@ export function useCloud(onPresentations: (list: Presentation[]) => void): Cloud
     email: snap.email,
     status: snap.status,
     notice: snap.notice,
+    accountChoice: snap.accountChoice,
     signIn: () => {
       void handle.current?.signIn();
     },
@@ -77,6 +84,9 @@ export function useCloud(onPresentations: (list: Presentation[]) => void): Cloud
     deleteCloud: () => {
       void handle.current?.deleteCloud();
     },
-    retry: () => handle.current?.retry()
+    retry: () => handle.current?.retry(),
+    keepSeparate: () => handle.current?.keepSeparate(),
+    mergeAccounts: () => handle.current?.mergeAccounts(),
+    dismissAccountChoice: () => handle.current?.dismissAccountChoice()
   };
 }

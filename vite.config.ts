@@ -39,9 +39,9 @@ export default defineConfig({
         cacheId: "speaker-copilot-sync-1",
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         navigateFallback: "index.html",
-        // OAuth returns to /?code= (PKCE) or /#access_token. Load the app from
-        // the network so a stale shell cannot swallow the session.
-        navigateFallbackDenylist: [/[?&]code=/, /access_token/, /error_description/],
+        // OAuth returns to /?code=. Load that navigation from the network.
+        // /privacy is a real page, not the app shell.
+        navigateFallbackDenylist: [/[?&]code=/, /error_description/, /\/privacy\/?$/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/[^/]*\.supabase\.co\/.*/i,

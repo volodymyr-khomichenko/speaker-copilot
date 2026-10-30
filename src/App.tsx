@@ -31,7 +31,11 @@ export default function App() {
   const [presentations, setPresentations] = useState<Presentation[]>(
     loadPresentationsWithSeed
   );
-  const [route, setRoute] = useState<Route>({ screen: "list" });
+  const [route, setRoute] = useState<Route>(() =>
+    window.location.pathname.replace(/\/$/, "") === "/privacy"
+      ? { screen: "privacy" }
+      : { screen: "list" }
+  );
   const [soundOn, setSoundOn] = useState(false);
   const onCloudList = useCallback((list: Presentation[]) => {
     setPresentations(list);
@@ -49,7 +53,10 @@ export default function App() {
         onSignOut={cloud.signOut}
         onDeleteCloud={cloud.deleteCloud}
         onRetry={cloud.retry}
-        onPrivacy={() => setRoute({ screen: "privacy" })}
+        accountChoice={cloud.accountChoice}
+        onKeepSeparate={cloud.keepSeparate}
+        onMergeAccounts={cloud.mergeAccounts}
+        onDismissAccountChoice={cloud.dismissAccountChoice}
       />
     );
   }
@@ -132,7 +139,16 @@ export default function App() {
 
     default:
       if (route.screen === "privacy") {
-        return <Privacy onBack={() => setRoute({ screen: "list" })} />;
+        return (
+          <Privacy
+            onBack={() => {
+              if (window.location.pathname.replace(/\/$/, "") === "/privacy") {
+                window.history.pushState({}, "", "/");
+              }
+              setRoute({ screen: "list" });
+            }}
+          />
+        );
       }
       return (
         <PresentationList

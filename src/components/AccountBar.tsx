@@ -5,11 +5,14 @@ interface Props {
   email: string | null;
   status: SyncStatus;
   notice: string;
+  accountChoice: boolean;
   onSignIn: () => void;
   onSignOut: () => void;
   onDeleteCloud: () => void;
   onRetry: () => void;
-  onPrivacy: () => void;
+  onKeepSeparate: () => void;
+  onMergeAccounts: () => void;
+  onDismissAccountChoice: () => void;
 }
 
 function statusText(status: SyncStatus): string {
@@ -73,14 +76,35 @@ export function AccountBar(props: Props) {
             >
               Delete my cloud data
             </button>
-            <button
-              type="button"
-              onClick={props.onPrivacy}
-              className="text-dim underline underline-offset-2"
-            >
+            <a href="/privacy" className="text-dim underline underline-offset-2">
               Privacy
-            </button>
+            </a>
           </div>
+          {props.accountChoice ? (
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={props.onKeepSeparate}
+                className="rounded-xl border border-line bg-panel-2 px-3 py-2 text-xs font-semibold"
+              >
+                Keep it separate
+              </button>
+              <button
+                type="button"
+                onClick={props.onMergeAccounts}
+                className="rounded-xl bg-onair px-3 py-2 text-xs font-bold text-stage"
+              >
+                Merge it into this account
+              </button>
+              <button
+                type="button"
+                onClick={props.onDismissAccountChoice}
+                className="px-2 py-2 text-xs text-dim underline underline-offset-2"
+              >
+                Not now
+              </button>
+            </div>
+          ) : null}
         </>
       ) : (
         <>
@@ -94,13 +118,9 @@ export function AccountBar(props: Props) {
           </button>
           <p className="mt-2 text-xs text-dim">
             Optional. Sync talks across devices.{" "}
-            <button
-              type="button"
-              onClick={props.onPrivacy}
-              className="font-semibold text-onair underline underline-offset-2"
-            >
+            <a href="/privacy" className="font-semibold text-onair underline underline-offset-2">
               Privacy
-            </button>
+            </a>
           </p>
         </>
       )}

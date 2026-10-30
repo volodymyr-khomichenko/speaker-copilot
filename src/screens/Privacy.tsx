@@ -22,12 +22,10 @@ export function Privacy({ onBack }: Props) {
         <p>
           Questions:{" "}
           <a
-            href="https://khomichenko.com"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="https://khomichenko.com/contact"
             className="font-semibold text-onair underline underline-offset-2"
           >
-            khomichenko.com
+            khomichenko.com/contact
           </a>
         </p>
       </div>

@@ -5,6 +5,8 @@ export interface CloudPayload {
   version: 1;
   presentations: Presentation[];
   deletedIds: Tombstone[];
+  /** Talks this app could not read. Written back unchanged so they are not deleted. */
+  preserved?: unknown[];
 }
 
 export function mergeTombstones(a: Tombstone[], b: Tombstone[]): Tombstone[] {

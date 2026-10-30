@@ -27,6 +27,9 @@ function stripCloud(): Plugin {
           "    signOut() { return Promise.resolve() },",
           "    deleteCloud() { return Promise.resolve() },",
           "    retry() {},",
+          "    keepSeparate() {},",
+          "    mergeAccounts() {},",
+          "    dismissAccountChoice() {},",
           "    dispose() {}",
           "  }",
           "}"

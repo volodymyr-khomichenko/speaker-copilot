@@ -105,12 +105,12 @@ export function backupPresentations(): void {
 
 /**
  * Write a cloud (or merged) list without marking it dirty.
- * The upcoming demo, if it is still here, keeps its relative date.
+ * Does not touch talk dates.
  */
 export function replacePresentationsFromCloud(list: Presentation[]): Presentation[] {
   const cleaned = list.map((p) => migrate(p));
   savePresentations(cleaned);
-  return keepFutureDemoUpcoming(loadPresentations());
+  return loadPresentations();
 }
 
 export function coercePresentation(raw: unknown): Presentation | null {
@@ -553,8 +553,7 @@ function demoRatingsLive(
 const DAY = 86400000;
 const isoDate = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
 
-const FUTURE_DEMO_NAME = "Demo · Future Talk";
-/** How far ahead the upcoming demo sits, counted from the day the app is opened. */
+/** Talk day for a newly seeded upcoming demo. Computed once, then left alone. */
 const FUTURE_DEMO_IN_DAYS = 14;
 
 function futureDemoDate(from = new Date()): string {
@@ -565,24 +564,6 @@ function futureDemoDate(from = new Date()): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
-}
-
-/**
- * While a talk is still named "Demo · Future Talk", each open puts its
- * talk day 14 days ahead of today — so the sample card stays Upcoming.
- * Rename it or delete it and it is left alone. Never recreated.
- * Does not bump SEED_VERSION and does not reset runs.
- */
-function keepFutureDemoUpcoming(list: Presentation[]): Presentation[] {
-  const nextDate = futureDemoDate();
-  let changed = false;
-  const next = list.map((p) => {
-    if (p.name !== FUTURE_DEMO_NAME || p.eventDate === nextDate) return p;
-    changed = true;
-    return { ...p, eventDate: nextDate };
-  });
-  if (changed) savePresentations(next);
-  return changed ? next : list;
 }
 
 /**
@@ -747,7 +728,7 @@ export function loadPresentationsWithSeed(): Presentation[] {
     }
     return list;
   }
-  const list = keepFutureDemoUpcoming(loadPresentations());
+  const list = loadPresentations();
   ensureUntouchedDemoIds(list);
   return list;
 }
