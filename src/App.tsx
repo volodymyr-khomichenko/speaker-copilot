@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import type { Presentation, RunRecord, RunReport } from "./lib/types";
 import { uid } from "./lib/types";
 import {
@@ -7,13 +7,17 @@ import {
   newPresentation,
   upsertPresentation
 } from "./lib/storage";
+import { useCloud } from "./hooks/useCloud";
+import { AccountBar } from "./components/AccountBar";
 import { PresentationList } from "./screens/PresentationList";
 import { PresentationEditor } from "./screens/PresentationEditor";
 import { PresentationMode } from "./screens/PresentationMode";
 import { RateRun } from "./screens/RateRun";
+import { Privacy } from "./screens/Privacy";
 
 type Route =
   | { screen: "list" }
+  | { screen: "privacy" }
   | { screen: "edit"; presentation: Presentation }
   | { screen: "present"; presentation: Presentation }
   | {
@@ -29,6 +33,26 @@ export default function App() {
   );
   const [route, setRoute] = useState<Route>({ screen: "list" });
   const [soundOn, setSoundOn] = useState(false);
+  const onCloudList = useCallback((list: Presentation[]) => {
+    setPresentations(list);
+  }, []);
+  const cloud = useCloud(onCloudList);
+
+  let account: ReactNode = null;
+  if (cloud.enabled && route.screen === "list") {
+    account = (
+      <AccountBar
+        email={cloud.email}
+        status={cloud.status}
+        notice={cloud.notice}
+        onSignIn={cloud.signIn}
+        onSignOut={cloud.signOut}
+        onDeleteCloud={cloud.deleteCloud}
+        onRetry={cloud.retry}
+        onPrivacy={() => setRoute({ screen: "privacy" })}
+      />
+    );
+  }
 
 
   const byId = (id: string) => presentations.find((p) => p.id === id);
@@ -107,9 +131,13 @@ export default function App() {
     }
 
     default:
+      if (route.screen === "privacy") {
+        return <Privacy onBack={() => setRoute({ screen: "list" })} />;
+      }
       return (
         <PresentationList
           presentations={presentations}
+          account={account}
           onCreate={() =>
             setRoute({ screen: "edit", presentation: newPresentation() })
           }

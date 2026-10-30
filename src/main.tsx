@@ -6,7 +6,7 @@ import "./index.css";
 import App from "./App.tsx";
 
 // Privacy-friendly, cookieless page analytics (views only).
-// Talks and all user data stay in LocalStorage and never leave the device.
+// Talks stay on the device. Optional Google sign-in syncs them to the user's own Supabase row.
 inject();
 
 createRoot(document.getElementById("root")!).render(

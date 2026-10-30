@@ -1,5 +1,15 @@
 import type { Presentation } from "./types";
 import { applyPercents, uid } from "./types";
+import {
+  BACKUP_KEY,
+  addTombstone,
+  clearHold,
+  demoIdsInitialized,
+  forgetUntouchedDemo,
+  notifyLocalChange,
+  recordUntouchedDemos,
+  setDirty
+} from "./syncMeta";
 
 const KEY = "scl:presentations:v1";
 const SEED_VERSION_KEY = "scl:seed-version";
@@ -58,18 +68,61 @@ export function savePresentations(list: Presentation[]): void {
   }
 }
 
+/** A real edit: dirty for sync, and a demo id stops being "untouched". */
+function commitUserList(list: Presentation[]): void {
+  clearHold();
+  setDirty();
+  savePresentations(list);
+  notifyLocalChange();
+}
+
 export function upsertPresentation(p: Presentation): Presentation[] {
+  forgetUntouchedDemo(p.id);
   const list = loadPresentations();
   const i = list.findIndex((x) => x.id === p.id);
   const next = i === -1 ? [p, ...list] : list.map((x) => (x.id === p.id ? p : x));
-  savePresentations(next);
+  commitUserList(next);
   return next;
 }
 
 export function deletePresentation(id: string): Presentation[] {
+  forgetUntouchedDemo(id);
+  addTombstone(id);
   const next = loadPresentations().filter((x) => x.id !== id);
-  savePresentations(next);
+  commitUserList(next);
   return next;
+}
+
+/** Copy of local talks taken before a cloud snapshot replaces them. */
+export function backupPresentations(): void {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw != null) localStorage.setItem(BACKUP_KEY, raw);
+  } catch {
+    /* the cloud copy is still applied */
+  }
+}
+
+/**
+ * Write a cloud (or merged) list without marking it dirty.
+ * The upcoming demo, if it is still here, keeps its relative date.
+ */
+export function replacePresentationsFromCloud(list: Presentation[]): Presentation[] {
+  const cleaned = list.map((p) => migrate(p));
+  savePresentations(cleaned);
+  return keepFutureDemoUpcoming(loadPresentations());
+}
+
+export function coercePresentation(raw: unknown): Presentation | null {
+  if (!raw || typeof raw !== "object") return null;
+  const p = raw as Presentation;
+  if (typeof p.id !== "string" || !p.id || typeof p.updatedAt !== "number") return null;
+  if (!Array.isArray(p.sections)) return null;
+  try {
+    return migrate(p);
+  } catch {
+    return null;
+  }
 }
 
 /** Default split: Opening 15% / Main part 70% / Closing 15% of a 20-minute talk. */
@@ -500,6 +553,38 @@ function demoRatingsLive(
 const DAY = 86400000;
 const isoDate = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
 
+const FUTURE_DEMO_NAME = "Demo · Future Talk";
+/** How far ahead the upcoming demo sits, counted from the day the app is opened. */
+const FUTURE_DEMO_IN_DAYS = 14;
+
+function futureDemoDate(from = new Date()): string {
+  const d = new Date(from.getTime());
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() + FUTURE_DEMO_IN_DAYS);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * While a talk is still named "Demo · Future Talk", each open puts its
+ * talk day 14 days ahead of today — so the sample card stays Upcoming.
+ * Rename it or delete it and it is left alone. Never recreated.
+ * Does not bump SEED_VERSION and does not reset runs.
+ */
+function keepFutureDemoUpcoming(list: Presentation[]): Presentation[] {
+  const nextDate = futureDemoDate();
+  let changed = false;
+  const next = list.map((p) => {
+    if (p.name !== FUTURE_DEMO_NAME || p.eventDate === nextDate) return p;
+    changed = true;
+    return { ...p, eventDate: nextDate };
+  });
+  if (changed) savePresentations(next);
+  return changed ? next : list;
+}
+
 /**
  * Demo talk #1 — an upcoming talk, mid-preparation: rehearsals in
  * progress, average still below the readiness target.
@@ -507,7 +592,7 @@ const isoDate = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
 function buildFutureTalk(): Presentation {
   const p = newPresentation();
   p.name = "Demo · Future Talk";
-  p.eventDate = "2026-09-27";
+  p.eventDate = futureDemoDate();
   p.totalTime = 30 * 60;
   p.sections = applyPercents(p.totalTime, [
     {
@@ -624,6 +709,22 @@ function buildPastTalk(): Presentation {
   return p;
 }
 
+const DEMO_NAMES = new Set(["Demo · Future Talk", "Demo · Past Talk"]);
+
+/**
+ * Remember the seeded sample talks so they are not treated as user edits.
+ * Once the key exists it is never rebuilt, so a later rename stays a real talk.
+ */
+function ensureUntouchedDemoIds(list: Presentation[]): void {
+  if (demoIdsInitialized()) return;
+  const ids = list
+    .filter(
+      (p) => DEMO_NAMES.has(p.name) && p.createdAt === p.updatedAt
+    )
+    .map((p) => p.id);
+  recordUntouchedDemos(ids);
+}
+
 /**
  * Seed once: new devices (and devices still on a dev seed) get the two
  * demo talks. From release-1 on, user data is never reset by updates.
@@ -638,6 +739,7 @@ export function loadPresentationsWithSeed(): Presentation[] {
   if (stored !== SEED_VERSION) {
     const list = [buildFutureTalk(), buildPastTalk()];
     savePresentations(list);
+    recordUntouchedDemos(list.map((p) => p.id));
     try {
       localStorage.setItem(SEED_VERSION_KEY, SEED_VERSION);
     } catch {
@@ -645,5 +747,7 @@ export function loadPresentationsWithSeed(): Presentation[] {
     }
     return list;
   }
-  return loadPresentations();
+  const list = keepFutureDemoUpcoming(loadPresentations());
+  ensureUntouchedDemoIds(list);
+  return list;
 }

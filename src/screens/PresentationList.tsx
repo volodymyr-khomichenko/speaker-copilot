@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { Presentation } from "../lib/types";
 import { totalDuration } from "../lib/types";
 import { fmtLong } from "../lib/time";
 
 interface Props {
   presentations: Presentation[];
+  account?: ReactNode;
   onCreate: () => void;
   onEdit: (id: string) => void;
   onOpen: (id: string) => void;
@@ -43,6 +44,7 @@ function countdown(d: number): { text: string; tone: string } {
 
 export function PresentationList({
   presentations,
+  account,
   onCreate,
   onEdit,
   onOpen,
@@ -81,6 +83,7 @@ export function PresentationList({
           <span className="lamp" aria-hidden />
           Your copilot on stage. Timing first.
         </p>
+        {account}
       </header>
 
       {presentations.length === 0 && (

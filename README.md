@@ -25,7 +25,8 @@ During a live talk it's easy to lose track of time or structure. Teleprompters k
 - Post-talk report: planned vs actual time, per section
 - Screen stays awake during the talk (Wake Lock API)
 - Works offline (PWA), installable on the home screen
-- LocalStorage only — no login, no backend, no cloud
+- Talks live in LocalStorage and the app works fully without a login
+- Optional Google sign-in syncs talks across devices (one Supabase row per user). Without a login, nothing leaves the browser
 - Talk day with a countdown on the list — see how close the talk is
 - Rehearsal goal: plan N test runs (default 10) and watch the counter go down with every finished run
 - Separate small "Start live talk" — the big button is for rehearsals
@@ -46,7 +47,16 @@ npm run dev      # local dev server
 npm run build    # production build in dist/
 ```
 
-Set your links and deploy the repo to Vercel — no configuration needed.
+Optional sync stays off until these are set (Vite inlines them at build time). Put them in `.env.local` for local dev, and in the Vercel project for production. Use the anon key only — never a service role key.
+
+```
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+```
+
+In the Supabase dashboard, enable the Google provider and allow the site origin as a redirect URL. The app sends the user back to `window.location.origin`.
+
+Set your links and deploy the repo to Vercel.
 
 ## Roadmap
 

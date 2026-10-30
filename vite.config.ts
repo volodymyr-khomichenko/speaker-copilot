@@ -4,6 +4,9 @@ import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  define: {
+    __OFFLINE_PREVIEW__: "false"
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -32,7 +35,19 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2}"]
+        // New cache id so installed PWAs drop the pre-sync shell.
+        cacheId: "speaker-copilot-sync-1",
+        globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
+        navigateFallback: "index.html",
+        // OAuth returns to /?code= (PKCE) or /#access_token. Load the app from
+        // the network so a stale shell cannot swallow the session.
+        navigateFallbackDenylist: [/[?&]code=/, /access_token/, /error_description/],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/[^/]*\.supabase\.co\/.*/i,
+            handler: "NetworkOnly"
+          }
+        ]
       }
     })
   ]
