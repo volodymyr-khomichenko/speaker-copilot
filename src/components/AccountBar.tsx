@@ -76,7 +76,12 @@ export function AccountBar(props: Props) {
             >
               Delete my cloud data
             </button>
-            <a href="/privacy" className="text-dim underline underline-offset-2">
+            <a
+              href="https://khomichenko.com/privacy-policy/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-dim underline underline-offset-2"
+            >
               Privacy
             </a>
           </div>
@@ -118,7 +123,12 @@ export function AccountBar(props: Props) {
           </button>
           <p className="mt-2 text-xs text-dim">
             Optional. Sync talks across devices.{" "}
-            <a href="/privacy" className="font-semibold text-onair underline underline-offset-2">
+            <a
+              href="https://khomichenko.com/privacy-policy/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-onair underline underline-offset-2"
+            >
               Privacy
             </a>
           </p>

@@ -139,16 +139,7 @@ export default function App() {
 
     default:
       if (route.screen === "privacy") {
-        return (
-          <Privacy
-            onBack={() => {
-              if (window.location.pathname.replace(/\/$/, "") === "/privacy") {
-                window.history.pushState({}, "", "/");
-              }
-              setRoute({ screen: "list" });
-            }}
-          />
-        );
+        return <Privacy />;
       }
       return (
         <PresentationList
