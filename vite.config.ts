@@ -40,8 +40,7 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         navigateFallback: "index.html",
         // OAuth returns to /?code=. Load that navigation from the network.
-        // /privacy is a real page, not the app shell.
-        navigateFallbackDenylist: [/[?&]code=/, /error_description/, /\/privacy\/?$/],
+        navigateFallbackDenylist: [/[?&]code=/, /error_description/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/[^/]*\.supabase\.co\/.*/i,

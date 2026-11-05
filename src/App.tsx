@@ -13,11 +13,9 @@ import { PresentationList } from "./screens/PresentationList";
 import { PresentationEditor } from "./screens/PresentationEditor";
 import { PresentationMode } from "./screens/PresentationMode";
 import { RateRun } from "./screens/RateRun";
-import { Privacy } from "./screens/Privacy";
 
 type Route =
   | { screen: "list" }
-  | { screen: "privacy" }
   | { screen: "edit"; presentation: Presentation }
   | { screen: "present"; presentation: Presentation }
   | {
@@ -31,11 +29,7 @@ export default function App() {
   const [presentations, setPresentations] = useState<Presentation[]>(
     loadPresentationsWithSeed
   );
-  const [route, setRoute] = useState<Route>(() =>
-    window.location.pathname.replace(/\/$/, "") === "/privacy"
-      ? { screen: "privacy" }
-      : { screen: "list" }
-  );
+  const [route, setRoute] = useState<Route>({ screen: "list" });
   const [soundOn, setSoundOn] = useState(false);
   const onCloudList = useCallback((list: Presentation[]) => {
     setPresentations(list);
@@ -138,9 +132,6 @@ export default function App() {
     }
 
     default:
-      if (route.screen === "privacy") {
-        return <Privacy />;
-      }
       return (
         <PresentationList
           presentations={presentations}
