@@ -321,7 +321,7 @@ function Run({
     [cue, presentation]
   );
 
-  const { state, paused, pause, resume, buildReport } = usePresentationTimer(
+  const { state, paused, pause, resume, skipSection, buildReport } = usePresentationTimer(
     presentation,
     onCue
   );
@@ -440,18 +440,27 @@ function Run({
         })}
       </div>
 
-      {/* Bottom controls: Pause, then three color-coded decks, then End/Sound. */}
+      {/* Bottom controls: Pause and skip, then decks, then End/Sound. */}
       <div className="shrink-0 pt-2">
-        <button
-          onClick={() => (paused ? resume() : pause())}
-          className={`display h-14 w-full rounded-xl border text-lg font-bold ${
-            paused
-              ? "border-ink bg-ink text-stage"
-              : "border-ink/40 bg-panel text-ink"
-          }`}
-        >
-          {paused ? "▶ Resume" : "❚❚ Pause"}
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => (paused ? resume() : pause())}
+            className={`display h-14 rounded-xl border text-lg font-bold ${
+              paused
+                ? "border-ink bg-ink text-stage"
+                : "border-ink/40 bg-panel text-ink"
+            }`}
+          >
+            {paused ? "▶ Resume" : "❚❚ Pause"}
+          </button>
+          <button
+            onClick={skipSection}
+            disabled={state.overtime}
+            className="display h-14 rounded-xl border border-line bg-panel text-lg font-bold text-ink disabled:opacity-40"
+          >
+            Skip section
+          </button>
+        </div>
         <div className="mt-2">{deckButtons}</div>
         <div className="mt-2 grid grid-cols-2 gap-2">
           <button

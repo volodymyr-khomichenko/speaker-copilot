@@ -6,8 +6,10 @@ import {
   clearHold,
   demoIdsInitialized,
   forgetUntouchedDemo,
+  loadTombstones,
   notifyLocalChange,
   recordUntouchedDemos,
+  saveTombstones,
   setDirty
 } from "./syncMeta";
 
@@ -89,6 +91,63 @@ export function deletePresentation(id: string): Presentation[] {
   forgetUntouchedDemo(id);
   addTombstone(id);
   const next = loadPresentations().filter((x) => x.id !== id);
+  commitUserList(next);
+  return next;
+}
+
+export interface TalkBackup {
+  version: 1;
+  exportedAt: string;
+  presentations: Presentation[];
+}
+
+/** JSON backup of the talks currently on this device. */
+export function talksBackup(list: Presentation[]): TalkBackup {
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    presentations: list
+  };
+}
+
+/**
+ * Read a backup file. Accepts the wrapped backup, a raw array, or one talk.
+ * Returns null when nothing in the file is a valid talk.
+ */
+export function parseTalkBackup(raw: string): Presentation[] | null {
+  let data: unknown;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const items = Array.isArray(data)
+    ? data
+    : data &&
+        typeof data === "object" &&
+        Array.isArray((data as { presentations?: unknown }).presentations)
+      ? (data as { presentations: unknown[] }).presentations
+      : [data];
+  const talks = items
+    .map((item) => coercePresentation(item))
+    .filter((p): p is Presentation => p !== null);
+  return talks.length > 0 ? talks : null;
+}
+
+/**
+ * Merge a backup into local talks. Same id: the later updatedAt wins.
+ * Talks not in the file stay. An imported talk is no longer treated as deleted.
+ */
+export function importPresentations(incoming: Presentation[]): Presentation[] {
+  const ids = new Set(incoming.map((p) => p.id));
+  saveTombstones(loadTombstones().filter((t) => !ids.has(t.id)));
+  for (const p of incoming) forgetUntouchedDemo(p.id);
+  const byId = new Map(loadPresentations().map((p) => [p.id, p]));
+  for (const p of incoming) {
+    const prev = byId.get(p.id);
+    if (!prev || p.updatedAt >= prev.updatedAt) byId.set(p.id, migrate(p));
+  }
+  const next = [...byId.values()].sort((a, b) => b.updatedAt - a.updatedAt);
   commitUserList(next);
   return next;
 }

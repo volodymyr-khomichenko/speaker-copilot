@@ -37,6 +37,9 @@ export function usePresentationTimer(
   // Pause: freeze the clock at pausedAt; pausedAccum collects finished pauses.
   const [pausedAt, setPausedAt] = useState<number | null>(null);
   const [pausedAccum, setPausedAccum] = useState(0);
+  // Seconds added when the speaker skips a section. The clock still runs from
+  // the real start time; this only jumps it forward.
+  const [skipSeconds, setSkipSeconds] = useState(0);
 
   const durations = useMemo(
     () => presentation.sections.map((s) => s.duration),
@@ -60,7 +63,10 @@ export function usePresentationTimer(
   }, []);
 
   const effectiveNow = pausedAt ?? nowMs;
-  const elapsed = Math.max(0, (effectiveNow - startedAt - pausedAccum) / 1000);
+  const elapsed = Math.max(
+    0,
+    (effectiveNow - startedAt - pausedAccum) / 1000 + skipSeconds
+  );
 
   const state: TimerState = useMemo(() => {
     let index = boundaries.findIndex((b) => elapsed < b);
@@ -122,11 +128,20 @@ export function usePresentationTimer(
       return null;
     });
 
+  /** Jump to the end of the current section. No-op once the talk is in overtime. */
+  const skipSection = () => {
+    const index = boundaries.findIndex((b) => elapsed < b);
+    if (index === -1) return;
+    const delta = boundaries[index] - elapsed;
+    if (delta <= 0) return;
+    setSkipSeconds((s) => s + delta);
+  };
+
   /** Build the post-talk report at the moment the speaker taps End. */
   function buildReport(): RunReport {
     const endElapsed = Math.max(
       0,
-      ((pausedAt ?? Date.now()) - startedAt - pausedAccum) / 1000
+      ((pausedAt ?? Date.now()) - startedAt - pausedAccum) / 1000 + skipSeconds
     );
     const sections: SectionResult[] = presentation.sections.map((s, i) => {
       const start = i === 0 ? 0 : boundaries[i - 1];
@@ -147,5 +162,5 @@ export function usePresentationTimer(
     };
   }
 
-  return { state, paused: pausedAt !== null, pause, resume, buildReport };
+  return { state, paused: pausedAt !== null, pause, resume, skipSection, buildReport };
 }

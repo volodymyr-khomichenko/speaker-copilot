@@ -3,8 +3,10 @@ import type { Presentation, RunRecord, RunReport } from "./lib/types";
 import { uid } from "./lib/types";
 import {
   deletePresentation,
+  importPresentations,
   loadPresentationsWithSeed,
   newPresentation,
+  talksBackup,
   upsertPresentation
 } from "./lib/storage";
 import { useCloud } from "./hooks/useCloud";
@@ -148,6 +150,19 @@ export default function App() {
             if (p) setRoute({ screen: "present", presentation: p });
           }}
           onDelete={(id) => setPresentations(deletePresentation(id))}
+          onExport={() => {
+            const blob = new Blob([JSON.stringify(talksBackup(presentations), null, 2)], {
+              type: "application/json"
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            const day = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `speaker-copilot-${day}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          onImport={(talks) => setPresentations(importPresentations(talks))}
         />
       );
   }

@@ -1,7 +1,8 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Presentation } from "../lib/types";
 import { totalDuration } from "../lib/types";
 import { fmtLong } from "../lib/time";
+import { parseTalkBackup } from "../lib/storage";
 
 interface Props {
   presentations: Presentation[];
@@ -10,6 +11,8 @@ interface Props {
   onEdit: (id: string) => void;
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
+  onExport: () => void;
+  onImport: (talks: Presentation[]) => void;
 }
 
 /** Whole days from today to the event date; null when no date is set. */
@@ -48,10 +51,14 @@ export function PresentationList({
   onCreate,
   onEdit,
   onOpen,
-  onDelete
+  onDelete,
+  onExport,
+  onImport
 }: Props) {
   // Two-tap delete: first tap arms the button, second tap deletes.
   const [armedId, setArmedId] = useState<string | null>(null);
+  const [backupNote, setBackupNote] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (!armedId) return;
     const t = setTimeout(() => setArmedId(null), 3000);
@@ -199,6 +206,49 @@ export function PresentationList({
       >
         + New talk
       </button>
+
+      <div className="mt-3 flex items-center justify-center gap-4 text-sm">
+        <button
+          type="button"
+          onClick={onExport}
+          disabled={presentations.length === 0}
+          className="font-semibold text-onair underline underline-offset-2 disabled:opacity-40"
+        >
+          Export backup
+        </button>
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          className="font-semibold text-dim underline underline-offset-2"
+        >
+          Import
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+              const talks = parseTalkBackup(String(reader.result ?? ""));
+              if (!talks) {
+                setBackupNote("Couldn't read that file. Nothing was changed.");
+                return;
+              }
+              onImport(talks);
+              setBackupNote(
+                talks.length === 1 ? "Imported 1 talk." : `Imported ${talks.length} talks.`
+              );
+            };
+            reader.readAsText(file);
+          }}
+        />
+      </div>
+      {backupNote ? <p className="mt-2 text-center text-xs text-dim">{backupNote}</p> : null}
 
       <footer className="mt-auto pt-8 text-center text-xs text-dim">
         © {new Date().getFullYear()} Speaker Copilot · built by{" "}
